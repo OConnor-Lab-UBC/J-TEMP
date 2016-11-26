@@ -10,7 +10,7 @@ jtemp %>%
 	group_by(temperature, rep) %>%
 	ggplot(aes(x = time_since_innoc_hours, group = rep, y = cell_density, color = factor(temperature))) + geom_point(size = 4) +
 	geom_line() + 
-	facet_wrap( ~ temperature, scales = "free")
+	facet_wrap( ~ temperature)
 
 jtemp %>% 
 	filter(temperature == 8, species == "CR") %>%
