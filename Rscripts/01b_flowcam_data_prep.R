@@ -22,17 +22,21 @@ library(stringr)
 
 #### Step 2: create a list of file names for each of the summaries ####
 
-cell_files <- list.files("/Users/Joey/Documents/J-star/flowcam-summaries-nov17", full.names = TRUE)  ## find out the names of all the files in data-summary, use full.names to get the relative path for each file
-cell_files
+cell_files <- c(list.files("data-raw/flowcam-summaries-nov10", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-nov14", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-nov8", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-nov17", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-nov21", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-nov24", full.names = TRUE))
 
+cell_files
 names(cell_files) <- cell_files %>% 
 	gsub(pattern = ".csv$", replacement = "")
 
 
 #### Step 3: read in all the files!
 
-all_cells <- map_df(cell_files, read_csv, col_names = FALSE,
-										.id = "file_name")
+all_cells <- map_df(cell_files, read_csv, col_names = FALSE, .id = "file_name")
 
 #### Step 4: pull out just the data we want, do some renaming etc.
 
@@ -47,7 +51,7 @@ Jtemp <- all_cells %>%
 				 cell_volume = `Volume (ABD)`)
 
 	
-	
+	## correct the places where we forgot to name the temperatures with 2 digits
 	Jtemp <- Jtemp %>% 
 	mutate(replicate = str_replace(replicate, "^5", "05")) %>%
 	mutate(replicate = str_replace(replicate, "^8", "08")) 
@@ -73,4 +77,4 @@ ggplot(data = Jtemp_all, aes(x = temperature, y = cell_density, color = species)
 
 
 #### Step 6: write out the correct csv file!! yay!
-write_csv(Jtemp_all, "Desktop/Jtemp_all.csv")
+write_csv(Jtemp_all, "data-processed/Jtemp_CR_all.csv")
