@@ -6,14 +6,15 @@ library(plotrix)
 jtemp <- read_csv("data-processed/Jtemp_CR_all.csv")
 
 jtemp %>%
-	filter(species == "CR", temperature != 35) %>% 
+	filter(species == "CR", temperature == 38) %>% View
+	arrange()
 	group_by(temperature, rep) %>%
 	ggplot(aes(x = time_since_innoc_hours, group = rep, y = total_biovolume, color = factor(temperature))) + geom_point(size = 4) +
 	geom_line() + 
 	facet_wrap( ~ temperature) + ggtitle("Chlamydomonas reinhardtii")
 
 jtemp %>% 
-	filter(temperature == 8, species == "CR") %>%
+	filter(species == "CR", temperature != "35") %>%
 	group_by(rep) %>% 
 	ggplot(data = ., aes(x = time_since_innoc_hours, group = factor(rep), y = cell_density)) +
 	# geom_point(size = 4) +
@@ -39,6 +40,9 @@ sea <- sea_raw %>%
 
 
 sea %>%
+	# filter(time_since_innoc_days < 1) %>%
+	# filter(cell_density < 10000) %>% 
+	# summarise_each(funs(mean, std.error), cell_density) %>% View
 	filter(temperature != "18") %>% 
 	filter(species == "CH") %>% 
 	group_by(temperature, rep) %>%
@@ -65,7 +69,10 @@ all_species %>%
 
 all_species %>%
 	filter(cell_density != 25415) %>% 
-	filter(species %in% c("CH", "TT", "CR"), temperature != 35) %>% 
+	filter(cell_density != 36425) %>% 
+	# filter(species %in% c("CH", "TT", "CR"), temperature != 35) %>% 
+	filter(temperature != "35") %>% 
+	filter(species == "CH") %>% 
 	mutate(month = month(start_time)) %>%
 	mutate(day = day(start_time)) %>% 
 	mutate(year = 2016) %>% 
@@ -77,7 +84,7 @@ all_species %>%
 geom_point(size = 5) +
 	geom_errorbar(aes(ymin = mean - std.error, ymax = mean + std.error), width = 1) +
 	geom_line() + 
-	facet_wrap( ~ species) + 
+	facet_wrap( ~ temperature) + 
 	xlab("date") + ylab("mean cell density") + 
 	theme_minimal() +
 	theme(panel.grid.major = element_blank(), 
