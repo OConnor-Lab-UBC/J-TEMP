@@ -218,7 +218,7 @@ mods %>%
 mods %>% 
 	filter(term == "K") %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
-	ggplot(aes(x = inverse_temp, y = log(estimate))) + geom_point(size = 4, alpha = 0.5, color = "#619CFF") +
+	ggplot(aes(x = inverse_temp, y = log(estimate))) + geom_point(size = 6, alpha = 0.5, color = "#619CFF") +
 	geom_smooth(method = "lm", color = "#619CFF") +
 	scale_x_reverse() + xlab("temperature (1/kT)") + ylab("ln carrying capacity, K") + 
 	theme_minimal() + 
@@ -376,6 +376,26 @@ ggplot(data.s, aes(x = day, y = density, color = factor(temperature))) +
 	
 library(scales)
 (hue_pal()(6))
+
+
+
+# try to fit TT with mm ---------------------------------------------------
+
+## remove 38 rep2, all of 5?
+
+sea %>% 
+	filter(species == "TT") %>%
+	filter(temperature == 25) %>%
+	# filter(temperature != 38) %>% 
+	# ggplot(aes(x = time_since_innoc_days, y = cell_density)) + geom_point()
+	group_by(temperature, rep) %>% 
+	do(tidy(nls(cell_density ~ Vm * time_since_innoc_days/(K+time_since_innoc_days), data = ., 
+							start = list(K = max(.$time_since_innoc_days)/2, Vm = max(.$cell_density))))) %>% 
+	filter(term == "Vm") %>% View
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	ungroup() %>% 
+	do(tidy(lm(log(estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
 
 
 
