@@ -526,4 +526,4 @@ all_species %>%
 	ggplot(aes(x = time_since_innoc_days, y = cell_density)) + geom_point() +
 	stat_growthcurve(type = "logistic")
 
-?stat_growthcurve
+
