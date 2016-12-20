@@ -29,7 +29,13 @@ cell_files <- c(list.files("data-raw/flowcam-summaries-nov10", full.names = TRUE
 								list.files("data-raw/flowcam-summaries-nov21", full.names = TRUE),
 								list.files("data-raw/flowcam-summaries-nov24", full.names = TRUE),
 								list.files("data-raw/flowcam-summaries-nov28", full.names = TRUE),
-								list.files("data-raw/flowcam-summaries-dec01", full.names = TRUE))
+								list.files("data-raw/flowcam-summaries-dec01", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-dec05", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-dec06", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-dec08", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-dec09", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-dec12", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-dec16", full.names = TRUE))
 
 cell_files[1]
 names(cell_files) <- cell_files %>% 
@@ -58,7 +64,8 @@ Jtemp <- all_cells %>%
 	## correct the places where we forgot to name the temperatures with 2 digits
 	Jtemp <- Jtemp %>% 
 	mutate(replicate = str_replace(replicate, "^5", "05")) %>%
-	mutate(replicate = str_replace(replicate, "^8", "08")) 
+	mutate(replicate = str_replace(replicate, "^8", "08")) %>% 
+	mutate(replicate = str_replace(replicate, "O8SO3", "08SO3"))
 	
 
 #### Step 5: deal with the date times and separate the replicate names
