@@ -11,7 +11,7 @@ library(growthcurve)
 jtemp <- read_csv("data-processed/Jtemp_CR_all.csv")
 
 jtemp %>%
-	filter(species == "CR", temperature == 38) %>% View
+	filter(species == "SO", temperature == 38) %>% View
 	arrange()
 	group_by(temperature, rep) %>%
 	ggplot(aes(x = time_since_innoc_hours, group = rep, y = total_biovolume, color = factor(temperature))) + geom_point(size = 4) +
@@ -25,7 +25,7 @@ jtemp %>%
 	# geom_point(size = 4) +
 	geom_point() + 
 	geom_line() +
-	facet_wrap( ~ temperature)
+	facet_wrap( ~ temperature, scales = "free")
 
 
 
