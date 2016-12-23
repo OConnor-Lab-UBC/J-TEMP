@@ -11,8 +11,8 @@ library(growthcurve)
 jtemp <- read_csv("data-processed/Jtemp_CR_all.csv")
 
 jtemp %>%
-	filter(species == "SO", temperature == 38) %>% View
-	arrange()
+	filter(species == "SO") %>% 
+	filter(total_biovolume < 1000000000) %>% 
 	group_by(temperature, rep) %>%
 	ggplot(aes(x = time_since_innoc_hours, group = rep, y = total_biovolume, color = factor(temperature))) + geom_point(size = 4) +
 	geom_line() + 
