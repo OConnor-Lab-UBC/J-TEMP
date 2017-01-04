@@ -92,4 +92,4 @@ ggplot(data = Jtemp_all, aes(x = temperature, y = cell_density, color = species)
 
 
 #### Step 6: write out the correct csv file!! yay!
-write_csv(Jtemp_all, "data-processed/Jtemp_CR_all.csv")
+write_csv(Jtemp_all, "data-processed/Jtemp_all.csv")
