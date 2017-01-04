@@ -16,7 +16,7 @@ jtemp %>%
 	group_by(temperature, rep) %>%
 	ggplot(aes(x = time_since_innoc_hours, group = rep, y = total_biovolume, color = factor(temperature))) + geom_point(size = 4) +
 	geom_line() + 
-	facet_wrap( ~ temperature) + ggtitle("Chlamydomonas reinhardtii")
+	facet_wrap( ~ temperature) + ggtitle("Scenedesmus obliquus")
 
 jtemp %>% 
 	filter(species == "CR", temperature != "35") %>%
