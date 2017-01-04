@@ -37,7 +37,9 @@ cell_files <- c(list.files("data-raw/flowcam-summaries-nov10", full.names = TRUE
 								list.files("data-raw/flowcam-summaries-dec12", full.names = TRUE),
 								list.files("data-raw/flowcam-summaries-dec16", full.names = TRUE),
 								list.files("data-raw/flowcam-summaries-dec20", full.names = TRUE),
-								list.files("data-raw/flowcam-summaries-dec22", full.names = TRUE))
+								list.files("data-raw/flowcam-summaries-dec22", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-dec24", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-jan01", full.names = TRUE))
 
 cell_files[1]
 names(cell_files) <- cell_files %>% 
@@ -48,7 +50,7 @@ names(cell_files) <- cell_files %>%
 
 all_cells <- map_df(cell_files, read_csv, col_names = FALSE, .id = "file_name")
 
-?read_delim
+
 
 #### Step 4: pull out just the data we want, do some renaming etc.
 
