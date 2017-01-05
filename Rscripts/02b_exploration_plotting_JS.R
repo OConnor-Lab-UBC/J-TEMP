@@ -107,9 +107,10 @@ for(i in 1:length(levels(SOdata$temperature))){
 	main=levels(SOdata$temperature)[i]
 }
 
-
+##########################################################
 #approximate K visually so JS can present preliminary results
 #For CH, take mean of data from 22 days onwards as approximation of K
+##########################################################
 CHK<-subset(CHdata, time_since_innoc_days>22)
 CHKmean<-aggregate(CHK, by=list(CHK$temperature), FUN=mean)
 CHKsd<-aggregate(CHK, by=list(CHK$temperature), FUN=sd)
@@ -141,5 +142,38 @@ segments(c(5,8,16,25,32,38),
 				 c(5,8,16,25,32,38),
 				 SOKmean$cell_density-SOKsd$cell_density)
 
+names(CHK)
+#Same plots but with BIOVOLUME
+#For CH, take mean of data from 22 days onwards as approximation of K
+CHK<-subset(CHdata, time_since_innoc_days>22)
+CHKmean<-aggregate(CHK, by=list(CHK$temperature), FUN=mean)
+CHKsd<-aggregate(CHK, by=list(CHK$temperature), FUN=sd)
+par(mfrow=c(1,3))
+plot(CHKmean$total_biovolume~levels(CHK$temperature), ylim=c(0, max(CHK$total_biovolume)/2))
+segments(c(5,8,16,25,32,38), 
+				 CHKmean$total_biovolume+CHKsd$total_biovolume,
+				 c(5,8,16,25,32,38),
+				 CHKmean$total_biovolume-CHKsd$total_biovolume)
+
+
+#For TT, take mean of data from 22 days onwards as approximation of K
+TTK<-subset(TTdata, time_since_innoc_days>22)
+TTKmean<-aggregate(TTK, by=list(TTK$temperature), FUN=mean)
+TTKsd<-aggregate(TTK, by=list(TTK$temperature), FUN=sd)
+plot(TTKmean$total_biovolume~levels(TTK$temperature), ylim=c(0, max(TTK$total_biovolume)))
+segments(c(5,8,16,25,32,38), 
+				 TTKmean$total_biovolume+TTKsd$total_biovolume,
+				 c(5,8,16,25,32,38),
+				 TTKmean$total_biovolume-TTKsd$total_biovolume)
+
+#For SO, take mean of data from 40 days onwards as approximation of K
+SOK<-subset(SOdata, time_since_innoc_days>40)
+SOKmean<-aggregate(SOK, by=list(SOK$temperature), FUN=mean)
+SOKsd<-aggregate(SOK, by=list(SOK$temperature), FUN=sd)
+plot(SOKmean$total_biovolume~levels(SOK$temperature), ylim=c(0, max(SOK$total_biovolume)))
+segments(c(5,8,16,25,32,38), 
+				 SOKmean$total_biovolume+SOKsd$total_biovolume,
+				 c(5,8,16,25,32,38),
+				 SOKmean$total_biovolume-SOKsd$total_biovolume)
 
 
