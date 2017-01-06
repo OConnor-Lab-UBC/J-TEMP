@@ -13,9 +13,8 @@ jtemp <- read_csv("data-processed/Jtemp_all.csv")
 jtemp %>%
 	filter(species == "SO") %>% 
 	filter(total_biovolume < 1000000000) %>% 
-	filter(temperature > 24) %>% 
 	group_by(temperature, rep) %>%
-	ggplot(aes(x = start_time, group = rep, y = total_biovolume, color = factor(temperature))) + geom_point(size = 4) +
+	ggplot(aes(x = time_since_innoc_days, group = rep, y = total_biovolume, color = factor(temperature))) + geom_point(size = 4) +
 	geom_line() + 
 	facet_wrap( ~ temperature) + ggtitle("Scenedesmus obliquus") +
 	theme(axis.text.x = element_text(angle = 75, hjust = 1))
@@ -145,6 +144,36 @@ mod <- sea %>%
 	# summarise_each(funs(mean, std.error), estimate) %>% View
 	ggplot(data = ., aes(x = temperature, y = estimate)) + geom_point(size = 4) +
 	scale_y_log10()
+
+## FOR SO 
+mod <- jtemp %>% 
+	filter(species == "SO") %>% 
+	filter(total_biovolume < 1000000000) %>% 
+	filter(temperature == 32) %>% 
+	# group_by(rep) %>%  
+	do(tidy(x = nls(cell_density ~ SSlogis(time_since_innoc_days, K, xmid, r), data = .), conf.int = TRUE, conf.level = 0.95)) %>% 
+	group_by(temperature) %>% 
+	filter(term == "K") %>% 
+	# summarise_each(funs(mean, std.error), estimate) %>% View
+	ggplot(data = ., aes(x = temperature, y = estimate)) + geom_point(size = 4) +
+	scale_y_log10()
+
+## 16 rep 4 can't be fit
+jtemp %>% 
+	filter(species == "SO") %>% 
+	filter(total_biovolume < 1000000000) %>% 
+	filter(temperature > 20) %>% 
+	group_by(temperature, rep) %>% 
+	do(tidy(nls(total_biovolume ~ Vm * time_since_innoc_days/(K+time_since_innoc_days), data = ., 
+							start = list(K = max(.$time_since_innoc_days)/2, Vm = max(.$total_biovolume))))) %>% 
+	filter(term == "Vm") %>%
+	# group_by(temperature) %>% 
+	# summarise_each(funs(mean, std.error), estimate) %>%
+	# ggplot(aes(x = temperature, y = mean)) + geom_point()
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	ungroup() %>% 
+	do(tidy(lm(log(estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
 
 
 sea1 <- sea %>% 
