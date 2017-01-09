@@ -98,6 +98,7 @@ for(i in 1:length(levels(TTdata$temperature))){
 	main=levels(TTdata$temperature)[i]
 }
 
+TTdata$time_since_innoc_days
 #SO
 SOdata<-subset(all_species, species %in% c("SO"))
 #par(mfrow=c(2,3))
