@@ -37,7 +37,9 @@ cell_files <- c(list.files("data-raw/flowcam-summaries-nov10", full.names = TRUE
 								list.files("data-raw/flowcam-summaries-dec12", full.names = TRUE),
 								list.files("data-raw/flowcam-summaries-dec16", full.names = TRUE),
 								list.files("data-raw/flowcam-summaries-dec20", full.names = TRUE),
-								list.files("data-raw/flowcam-summaries-dec22", full.names = TRUE))
+								list.files("data-raw/flowcam-summaries-dec22", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-dec24", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-jan01", full.names = TRUE))
 
 cell_files[1]
 names(cell_files) <- cell_files %>% 
@@ -48,7 +50,7 @@ names(cell_files) <- cell_files %>%
 
 all_cells <- map_df(cell_files, read_csv, col_names = FALSE, .id = "file_name")
 
-?read_delim
+
 
 #### Step 4: pull out just the data we want, do some renaming etc.
 
@@ -67,11 +69,16 @@ Jtemp <- all_cells %>%
 	Jtemp <- Jtemp %>% 
 	mutate(replicate = str_replace(replicate, "^5", "05")) %>%
 	mutate(replicate = str_replace(replicate, "^8", "08")) %>% 
-	mutate(replicate = str_replace(replicate, "O8SO3", "08SO3"))
+	mutate(replicate = str_replace(replicate, "O8SO3", "08SO3")) %>% 
+	separate(replicate, into = c("temperature", "species", "rep"), sep = c(2, 4)) %>% 
+	mutate(temperature = as.numeric(temperature)) %>%
+	select(-other)
 	
 
 #### Step 5: deal with the date times and separate the replicate names
 Jtemp$start.time <- ymd_hms("2016-11-08 16:15:43")
+Jtemp$start.time[Jtemp$species == "SO"] <- ymd_hms("2016-12-05 12:00:29")
+
 
 Jtemp$time_since_innoc <- interval(Jtemp$start.time, Jtemp$start_time)
 
@@ -81,13 +88,13 @@ Jtemp_all <- Jtemp %>%
 	mutate(time_since_innoc_hours = time_since_innoc/dhours(1)) %>%
 	mutate(cell_density = as.numeric(cell_density),
 				 cell_volume = as.numeric(cell_volume)) %>% 
-	mutate(total_biovolume = cell_density * cell_volume) %>% 
-	separate(replicate, into = c("temperature", "species", "rep"), sep = c(2, 4)) %>% 
-	mutate(temperature = as.numeric(temperature)) %>% 
-	select(-other)
+	mutate(total_biovolume = cell_density * cell_volume) 
+
+
+
 
 ggplot(data = Jtemp_all, aes(x = temperature, y = cell_density, color = species)) + geom_point()
 
 
 #### Step 6: write out the correct csv file!! yay!
-write_csv(Jtemp_all, "data-processed/Jtemp_CR_all.csv")
+write_csv(Jtemp_all, "data-processed/Jtemp_all.csv")
