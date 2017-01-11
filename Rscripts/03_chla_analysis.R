@@ -63,9 +63,15 @@ all %>%
 	facet_wrap( ~ species)
 
 all_long <- all %>% 
+	rename(`cell concentration (per ml)` = cell_density,
+				 `cell size (um3)` = cell_volume,
+				 `chla concentration (ug/l)` = chla,
+				 `total biovolume concentration (um3/ml)` = total_biovolume) %>% 
 	gather(type, obs, 4:7)
+	
 	
 all_long %>% 
 	filter(species == "TT") %>% 
 ggplot(aes(x = temperature, y = obs, color = species, group = species)) + geom_point(size = 4) +
-	facet_wrap( ~ type, scales = "free")
+	facet_wrap( ~ type, scales = "free") + theme_bw()
+

@@ -18,6 +18,12 @@ jtemp %>%
 	geom_line() + 
 	facet_wrap( ~ temperature) + ggtitle("Scenedesmus obliquus") +
 	theme(axis.text.x = element_text(angle = 75, hjust = 1))
+
+jtemp %>%
+	filter(species == "SO") %>% 
+	# filter(total_biovolume < 1000000000) %>% 
+	filter(temperature == 16) %>% View
+
 	 
 
 jtemp %>% 
