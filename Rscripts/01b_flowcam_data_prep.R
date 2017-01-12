@@ -41,7 +41,8 @@ cell_files <- c(list.files("data-raw/flowcam-summaries-nov10", full.names = TRUE
 								list.files("data-raw/flowcam-summaries-dec24", full.names = TRUE),
 								list.files("data-raw/flowcam-summaries-jan01", full.names = TRUE),
 								list.files("data-raw/flowcam-summaries-jan04", full.names = TRUE),
-								list.files("data-raw/flowcam-summaries-jan10", full.names = TRUE))
+								list.files("data-raw/flowcam-summaries-jan10", full.names = TRUE),
+								list.files("data-raw/flowcam-summaries-jan11", full.names = TRUE))
 
 cell_files[1]
 names(cell_files) <- cell_files %>% 
