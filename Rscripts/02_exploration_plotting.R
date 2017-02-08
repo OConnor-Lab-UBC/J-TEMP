@@ -16,12 +16,12 @@ phosphate_so <- read_csv("data-processed/SO_phosphate_concentrations.csv")
 
 
 jtemp %>%
-	filter(species == "CR") %>% 
-	filter(total_biovolume < 100000000) %>% 
+	filter(species == "SO") %>% 
+  filter(total_biovolume < 1000000000) %>% 
 	group_by(temperature, rep) %>%
 	ggplot(aes(x = time_since_innoc_days, group = rep, y = total_biovolume, color = factor(temperature))) + geom_point(size = 4) +
 	geom_line() + 
-	facet_wrap( ~ temperature) + ggtitle("CR") +
+	facet_wrap( ~ temperature, scales = "free") + ggtitle("SO") +
 	theme(axis.text.x = element_text(angle = 75, hjust = 1))
 
 

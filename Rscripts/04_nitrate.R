@@ -103,6 +103,7 @@ write_csv(phosphate_samples, "data-processed/SO_phosphate_concentrations.csv")
 
 ggplot(data = standards_phosphate, aes(x = phosphate_standard, y = absorbance)) + geom_point(size = 3) + geom_smooth(method = "lm")
 
+ggplot(data = phosphate_samples, aes( x = temperature, y = phosphate_concentration)) + geom_point()
 
 
 
