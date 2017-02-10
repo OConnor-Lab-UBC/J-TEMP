@@ -1,0 +1,238 @@
+# carrying capacity analysis for Tetraselmis tetrahele
+
+
+
+
+
+### Background
+
+#### We asked
+
+_How does carrying capacity vary with temperature?_
+
+####  We predicted
+
+* Carrying capacity should decrease with warming, due to higher metabolic demands. As such, the temperature depence of carrying capacity should vary inversely with the temperature dependence of photosynthesis (e.g. Ea = 0.32 eV), which limits metabolism in autotrophs. 
+
+#### Our goals for now:
+
+* estimate r and K by fitting a logistic growth model to our experimental data
+
+* estimate the temperature dependence of K (i.e. Ea of K)
+
+Read in data
+
+```r
+sea <- read_csv("/Users/Joey/Documents/J-TEMP/data-processed/sea_processed.csv")
+all_cells_TT <-	sea %>%
+	filter(species == "TT") %>% 
+	unite(Unique_ID, temperature, rep, remove = FALSE) %>%  
+	rename(replicate = rep) %>% 
+	rename(P = total_biovolume,
+				 days = time_since_innoc_days,
+				 ID = Unique_ID) %>% 
+	arrange(ID, days) %>% 
+	filter(!grepl("NA", ID))
+```
+
+### Define models
+
+Define our logisitic growth model
+
+```r
+Parameters <- c(r = 1, K = 10 ^ 7) ## initial parameter guesses
+CRmodel <- new("odeModel",
+							 main = function (time, init, parms) {
+							 	with(as.list(c(init, parms)), {
+							 		dp <-  r * P * (1 - (P / K))
+							 		list(c(dp))
+							 	})
+							 },
+							 parms = Parameters,
+							 times = c(from = 0, to = 43, by = 0.1), # the time interval over which the model will be simulated.
+							 init = c(P = 971410.2), # starting biovolume
+							 solver = "lsoda" #lsoda will be called with tolerances of 1e-9. Default tolerances are both 1e-6. Lower is more accurate.
+)
+
+fittedparms <- c("r", "K") # for assigning fitted parameter values to fittedCRmodel
+
+controlfit <- function(data){
+	
+	init(CRmodel) <- c(P = data$P[1]) # Set initial model conditions to the biovolume taken from the first measurement day
+	obstime <- data$days # The X values of the observed data points we are fitting our model to
+	yobs <- select(data, P) # The Y values of the observed data points we are fitting our model to
+	
+	
+	fittedCRmodel <- fitOdeModel(CRmodel, whichpar = fittedparms, obstime, yobs,
+															 debuglevel = 0, fn = ssqOdeModel,
+															 method = "PORT", lower = LowerBound, upper = UpperBound, scale.par = ParamScaling,
+															 control = list(trace = T)
+	)
+	
+	r <- coef(fittedCRmodel)[1]
+	K <- coef(fittedCRmodel)[2]
+	ID <- data$ID[1]
+	output <- data.frame(ID, r, K)
+	return(output)
+}
+```
+
+Define the function that we will use for generating our model fit plots
+
+
+```r
+plotsinglefit <- function(data){
+	
+	init(CRmodel) <- c(P = data$P[1]) # Set initial model conditions to the biovolume taken from the first measurement day
+	obstime <- data$days # The X values of the observed data points we are fitting our model to
+	yobs <- select(data, P) # The Y values of the observed data points we are fitting our model to
+	# parms(CRmodel)[TempName] <- data$temp[1] # Set the temperature parameter in CRmodel to whatever our control replicate used.
+	
+	# Below we fit a CRmodel to the replicate's data. The optimization criterion used here is the minimization of the sum of
+	# squared differences between the experimental data and our modelled data. 
+	
+	# The PORT algorithm is used for the model fitting, analogous to O'Connor et al.
+	# "lower" is a vector containing the lower bound constraints
+	# for the parameter values.
+	
+	fittedCRmodel <- fitOdeModel(CRmodel, whichpar = fittedparms, obstime, yobs,
+															 debuglevel = 0, fn = ssqOdeModel,
+															 method = "PORT", lower = LowerBound, upper = UpperBound, scale.par = ParamScaling,
+															 control = list(trace = T)
+	)
+	
+	# To display the fitted results we need to create a new OdeModel object. Here
+	# we duplicate CRmodel and then alter it to use our new fitted parameters.
+	plotfittedCRmodel <- CRmodel
+	parms(plotfittedCRmodel)[fittedparms] <- coef(fittedCRmodel)
+	
+	# set model parameters to fitted values and simulate again
+	times(plotfittedCRmodel) <- c(from=0, to=43, by=1)
+	ysim <- out(sim(plotfittedCRmodel, rtol = 1e-9, atol = 1e-9))
+	
+	# Form observed data into a dataframe; the simulated data are already in a dataframe
+	observeddata <- data.frame(obstime, yobs)
+	observeddata$type <- "observed"
+	observeddata <- rename(observeddata, time = obstime)
+	simulateddata <- ysim
+	simulateddata$type <- "simulated"
+output <- bind_rows(observeddata, simulateddata) ## plop everything together into one data frame
+	
+
+	# Alternative: Plot the results of our model fitting directly.
+	# biol_plot <- ggplot() +
+	# 	geom_point(data = observeddata, aes(x = obstime, y = yobs, color = "observed")) + # Observed data are points
+	# 	geom_line(data = simulateddata, aes(x = time, y = P, color = "simulated")) + # Simulated data are in a continuous line
+	# 	labs(x = "Time (days)", y = "Algal Biovolume")
+	
+	# Output the results as a ggplot2 object
+	# output <- biol_plot
+	return(output)
+}
+```
+
+### Fitting process
+
+Set upper and lower bounds and initial guesses for our parameters
+
+```r
+Parameters <- c(r = 1, K = 10 ^ 7)
+
+# Declare the parameters to be used as the bounds for the fitting algorithm
+LowerBound <- c(r = 0.01, K = 10 ^ 2)
+UpperBound <- c(r = 10, K = 10 ^ 9) 
+
+# Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
+# by the simecol documentation.
+ParamScaling <- 1 / UpperBound
+```
+
+Onto the actual fitting! The output_TT will be a dataframe with all of our estimated r and Ks.
+
+```r
+#Going to cheat here and not run this here. Since it'll take a while! But I'm including it so we can see it.
+
+TT_split <- split(all_cells_TT, f = all_cells_TT$ID) ## split the TT dataframe into little mini dataframes, one for each replicate - temperature combination. We will then use a map function to apply our fitting function to each dataframe individually.
+
+output_TT <- TT_split %>% 
+	map_df(controlfit)
+
+write_csv(output_TT, "/Users/Joey/Documents/J-TEMP/data-processed/output_rK_TT.csv")
+```
+
+
+### Plot the model fits
+
+```r
+obs_sim_data <- TT_split %>% 
+	map_df(plotsinglefit, .id = "ID") ## don't run this here
+
+obs_sim_data %>% 
+	separate(ID, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(type = str_replace(type, "simulated", "fit"))
+
+write_csv(obs_sim_data, "/Users/Joey/Documents/J-TEMP/data-processed/TT_obs_sim_data.csv")
+```
+
+
+Plot the observed and simulated data, based on our fitted parameters to see how they match up
+
+```r
+obs_sim_data <- read_csv("/Users/Joey/Documents/J-TEMP/data-processed/TT_obs_sim_data.csv")
+ggplot() +
+	geom_point(data = obs_sim_data, aes(x = time, y = P, color = type)) + 
+	facet_wrap( ~ ID) + theme_bw() + ylab("biovolume (um3/ml)") + xlab("days")
+```
+
+![](06_K_fitting_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+```r
+# ggsave("figures/time_series_fits_TT.png", width = 12, height = 10)
+```
+
+
+### Explore the K - temp relationships
+
+```r
+## cheat here and pull in the already run model outputs
+output_TT <- read_csv("/Users/Joey/Documents/J-TEMP/data-processed/output_rK_TT.csv")
+```
+
+Plot K vs. temperature
+
+```r
+output_TT %>% 
+	separate(ID, into = c("temperature", "rep")) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	# filter(K < 50000000) %>% 
+	# filter(r < 1) %>% ## these are weirdo fits. Will come back to seeing if I can fix this
+	filter(temperature < 33) %>% 
+	ggplot(aes(x = temperature, y = log(K))) + geom_point(size = 3) + geom_smooth(method = lm) + theme_bw() + ylab("ln carrying capacity (biovolume um3/ml)")
+```
+
+![](06_K_fitting_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+
+Get the activation energy of K
+
+```r
+output_TT %>% 
+	separate(ID, into = c("temperature", "rep")) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(temperature < 33) %>% 
+	# filter(K < 50000000) %>%
+	# filter(r < 1) %>%
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	do(tidy(lm(log(K) ~ inverse_temp, data = .), conf.int = TRUE)) %>% 
+	knitr::kable(., align = 'c', format = 'markdown', digits = 2)
+```
+
+
+
+|     term     | estimate | std.error | statistic | p.value | conf.low | conf.high |
+|:------------:|:--------:|:---------:|:---------:|:-------:|:--------:|:---------:|
+| (Intercept)  |   1.11   |   1.04    |   1.07    |  0.29   |  -1.03   |   3.26    |
+| inverse_temp |   0.38   |   0.03    |   14.80   |  0.00   |   0.33   |   0.44    |
+
+

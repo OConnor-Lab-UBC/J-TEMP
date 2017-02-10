@@ -3,6 +3,7 @@ library(simecol)
 library(plotrix)
 library(gridExtra)
 library(stringr)
+library(broom)
 
 
 
@@ -22,6 +23,8 @@ sea <- sea_raw %>%
 	filter(cell_volume != 398.070) %>% 
 	filter(cell_density > 2100) ## get rid of potentially erroneous measurement points that are really low
 
+
+write_csv(sea, "data-processed/sea_processed.csv")
 	
 sea %>% 
 	filter(species == "CH", temperature == 38) %>% View
@@ -211,7 +214,7 @@ SO_plot <- SO_fitted %>%
 
 # now moving onto other species here --------------------------------------
 
-sea <- read_csv("data-processed/sea.csv")
+# sea <- read_csv("data-processed/sea.csv")
 
 
 all_cells_TT <-	sea %>%
@@ -245,10 +248,49 @@ ParamScaling <- 1 / UpperBound
 
 controldata_TT <- split(all_cells_TT, f = all_cells_TT$ID)
 str(controldata_sea)
-output_sea <- controldata_sea %>% 
+output_TT <- controldata_TT %>% 
 	map_df(controlfit)
 
-fitted_rk_TT <- output_sea
+output_TT %>% 
+	separate(ID, into = c("temperature", "rep")) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	# filter(K < 50000000) %>% 
+	# filter(r < 1) %>% 
+	filter(temperature < 33) %>% 
+	ggplot(aes(x = temperature, y = log(K))) + geom_point() + geom_smooth(method = lm) + theme_bw()
+
+activation_energy_K <- output_TT %>% 
+	separate(ID, into = c("temperature", "rep")) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(temperature < 33) %>% 
+	# filter(K < 50000000) %>%
+	# filter(r < 1) %>%
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	do(tidy(lm(log(K) ~ inverse_temp, data = .), conf.int = TRUE)) 
+write_csv(activation_energy_K, "data-processed/K_Ea.csv")
+
+activation_energy_r <- output_TT %>% 
+	separate(ID, into = c("temperature", "rep")) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	do(tidy(lm(log(r) ~ inverse_temp, data = .), conf.int = TRUE)) 
+
+
+
+
+
+
+	group_by(temperature) %>% 
+	summarise_each(funs(mean, std.error), r, K) %>% 
+	ggplot(aes( x= temperature, y = r_mean)) + geom_point(size = 3) + theme_bw() +
+	geom_errorbar(aes(ymin = r_mean - r_std.error, ymax = r_mean + r_std.error), width = 0.1) +
+	geom_smooth() +
+	ylab("intrinsic growth rate (r)") + ggtitle("T. tetrahele")
+
+
+
+
+
 
 ## something weird is going on with the 38s!
 write_csv(fitted_rk_TT, "data-processed/fitted_rk_TT.csv")
