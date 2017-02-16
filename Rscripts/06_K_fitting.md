@@ -20,7 +20,51 @@ _How does carrying capacity vary with temperature?_
 
 * estimate the temperature dependence of K (i.e. Ea of K)
 
-Read in data
+* estimate the activation energies of photosynthesis and respiration in T. Tetrahelis
+
+
+### Estimate activation energies for photosynthesis and respiration
+
+Read in metabolic rate
+
+*Note! these are practice respirometry data from Scenesdesmus obliquus...I expect the T. Tetrahelis data to look a little different*
+
+
+```r
+metabolic_rate_data <- read_csv("/Users/Joey/Documents/J-TEMP/data-raw/scenedesmus_photo_resp_rates.csv")
+
+metabolic_rate_data %>%
+	gather(key = flux_type, value = rate_estimate, GPP, contains("corrected")) %>% 
+	mutate(rate_estimate = rate_estimate * 3600) %>% 
+	group_by(temperature.x, flux_type) %>% 
+	summarise_each(funs(mean, std.error), rate_estimate) %>%
+	mutate(mean = ifelse(grepl("respiration", flux_type), mean*-1, mean)) %>%
+	mutate(flux_type = ifelse(grepl("corrected_respiration_slope", flux_type), "respiration", flux_type)) %>% 
+	mutate(flux_type = ifelse(grepl("corrected_photosynthesis_slope", flux_type), "photosynthesis", flux_type)) %>%
+	# mutate(mean = ifelse(grepl("respiration", flux_type), mean*-1, mean)) %>% 
+	ggplot(aes(x = temperature.x, y = mean)) + geom_point(size = 3) +
+	facet_wrap( ~ flux_type) + geom_errorbar(aes(ymin = mean - std.error, ymax = mean + std.error), width = 0.1) +
+	xlab("temperature") +
+	ylab("oxygen flux (mg/L*hour)") + geom_hline(yintercept = 0) + theme_bw() 
+```
+
+![](06_K_fitting_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+
+Plots to get activation energies
+![](06_K_fitting_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
+Estimate activation energies
+
+|   flux_type    |     term     | estimate | std.error | statistic | p.value | conf.low | conf.high |
+|:--------------:|:------------:|:--------:|:---------:|:---------:|:-------:|:--------:|:---------:|
+|      GPP       | inverse_temp |  -0.94   |   0.06    |  -16.28   |    0    |  -1.06   |   -0.82   |
+| photosynthesis | inverse_temp |  -1.14   |   0.07    |  -17.42   |    0    |  -1.27   |   -1.01   |
+|  respiration   | inverse_temp |  -0.70   |   0.10    |   -6.93   |    0    |  -0.91   |   -0.50   |
+
+
+
+
+Read in time series population dynamics data
 
 ```r
 sea <- read_csv("/Users/Joey/Documents/J-TEMP/data-processed/sea_processed.csv")
@@ -32,7 +76,7 @@ all_cells_TT <-	sea %>%
 				 days = time_since_innoc_days,
 				 ID = Unique_ID) %>% 
 	arrange(ID, days) %>% 
-	filter(!grepl("NA", ID))
+	filter(!grepl("NA", ID)) 
 ```
 
 ### Define models
@@ -180,12 +224,21 @@ Plot the observed and simulated data, based on our fitted parameters to see how 
 
 ```r
 obs_sim_data <- read_csv("/Users/Joey/Documents/J-TEMP/data-processed/TT_obs_sim_data.csv")
+
+obs_sim_data %>% 
+	filter(ID == "16_5") %>% 
+	ggplot(aes(x = time, y = P, color = type)) + geom_point(size = 3)
+```
+
+![](06_K_fitting_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+```r
 ggplot() +
 	geom_point(data = obs_sim_data, aes(x = time, y = P, color = type)) + 
 	facet_wrap( ~ ID) + theme_bw() + ylab("biovolume (um3/ml)") + xlab("days")
 ```
 
-![](06_K_fitting_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](06_K_fitting_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
 
 ```r
 # ggsave("figures/time_series_fits_TT.png", width = 12, height = 10)
@@ -199,7 +252,7 @@ ggplot() +
 output_TT <- read_csv("/Users/Joey/Documents/J-TEMP/data-processed/output_rK_TT.csv")
 ```
 
-Plot K vs. temperature
+Plot K vs. temperature (for the temperatures below Topt...32 and 38 are above Topt so omit here)
 
 ```r
 output_TT %>% 
@@ -207,20 +260,20 @@ output_TT %>%
 	mutate(temperature = as.numeric(temperature)) %>% 
 	# filter(K < 50000000) %>% 
 	# filter(r < 1) %>% ## these are weirdo fits. Will come back to seeing if I can fix this
-	filter(temperature < 33) %>% 
+	filter(temperature < 30) %>% 
 	ggplot(aes(x = temperature, y = log(K))) + geom_point(size = 3) + geom_smooth(method = lm) + theme_bw() + ylab("ln carrying capacity (biovolume um3/ml)")
 ```
 
-![](06_K_fitting_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](06_K_fitting_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 
-Get the activation energy of K
+Get the activation energy of K (for the temperatures below Topt...32 and 38 are above Topt so omit here)
 
 ```r
 output_TT %>% 
 	separate(ID, into = c("temperature", "rep")) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
-	filter(temperature < 33) %>% 
+	filter(temperature < 30) %>% 
 	# filter(K < 50000000) %>%
 	# filter(r < 1) %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
@@ -232,7 +285,26 @@ output_TT %>%
 
 |     term     | estimate | std.error | statistic | p.value | conf.low | conf.high |
 |:------------:|:--------:|:---------:|:---------:|:-------:|:--------:|:---------:|
-| (Intercept)  |   1.11   |   1.04    |   1.07    |  0.29   |  -1.03   |   3.26    |
-| inverse_temp |   0.38   |   0.03    |   14.80   |  0.00   |   0.33   |   0.44    |
+| (Intercept)  |   3.58   |   0.84    |   4.27    |    0    |   1.82   |   5.33    |
+| inverse_temp |   0.32   |   0.02    |   15.70   |    0    |   0.28   |   0.37    |
+
+
+### At carrying capacity: cell traits
+
+Let's look at what's happening at the final timepoint
+
+
+```r
+TT_cell_data <- read_csv("/Users/Joey/Documents/J-TEMP/data-processed/CH_TT_chla_biovolume_final_time.csv")
+
+TT_cell_data %>% 
+	filter(species == "TT") %>% 
+ggplot(aes(x = temperature, y = obs)) + geom_point(size = 4, color = "blue", alpha = 0.5) +
+	facet_wrap( ~ type, scales = "free") + theme_bw()
+```
+
+![](06_K_fitting_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+
+
 
 

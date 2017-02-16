@@ -1,0 +1,241 @@
+temperature,replicate,species,type,obs
+5.0,1,CH,chla concentration (ug/l),25.91387509
+5.0,2,CH,chla concentration (ug/l),24.79917231
+5.0,3,CH,chla concentration (ug/l),26.91888638
+5.0,4,CH,chla concentration (ug/l),5.742498119
+5.0,5,CH,chla concentration (ug/l),27.39619263
+8.0,1,CH,chla concentration (ug/l),25.31205418
+8.0,2,CH,chla concentration (ug/l),13.50984199
+8.0,3,CH,chla concentration (ug/l),25.51364936
+8.0,4,CH,chla concentration (ug/l),34.42534236
+8.0,5,CH,chla concentration (ug/l),30.16812641
+16.0,1,CH,chla concentration (ug/l),20.91846501
+16.0,2,CH,chla concentration (ug/l),27.56814146
+16.0,3,CH,chla concentration (ug/l),22.7772912
+16.0,4,CH,chla concentration (ug/l),20.19509406
+16.0,5,CH,chla concentration (ug/l),13.5276298
+25.0,1,CH,chla concentration (ug/l),11.42570354
+25.0,2,CH,chla concentration (ug/l),11.65694507
+25.0,3,CH,chla concentration (ug/l),9.95820918
+25.0,4,CH,chla concentration (ug/l),14.92990218
+25.0,5,CH,chla concentration (ug/l),10.29024831
+32.0,1,CH,chla concentration (ug/l),3.264063205
+32.0,2,CH,chla concentration (ug/l),3.071361926
+32.0,3,CH,chla concentration (ug/l),3.753227991
+32.0,4,CH,chla concentration (ug/l),3.118796087
+32.0,5,CH,chla concentration (ug/l),3.305568096
+38.0,1,CH,chla concentration (ug/l),2.899413093
+38.0,2,CH,chla concentration (ug/l),2.253122649
+38.0,3,CH,chla concentration (ug/l),2.32427389
+38.0,4,CH,chla concentration (ug/l),2.31834462
+38.0,5,CH,chla concentration (ug/l),2.075244545
+5.0,1,TT,chla concentration (ug/l),16.69978932
+5.0,2,TT,chla concentration (ug/l),14.20653123
+5.0,3,TT,chla concentration (ug/l),24.89404063
+5.0,4,TT,chla concentration (ug/l),16.52487585
+5.0,5,TT,chla concentration (ug/l),13.3082468
+8.0,1,TT,chla concentration (ug/l),12.84872837
+8.0,2,TT,chla concentration (ug/l),12.20836719
+8.0,3,TT,chla concentration (ug/l),24.66872837
+8.0,4,TT,chla concentration (ug/l),22.03613243
+8.0,5,TT,chla concentration (ug/l),29.30245297
+16.0,1,TT,chla concentration (ug/l),8.395846501
+16.0,2,TT,chla concentration (ug/l),7.678404816
+16.0,3,TT,chla concentration (ug/l),11.41680963
+16.0,4,TT,chla concentration (ug/l),10.23392024
+16.0,5,TT,chla concentration (ug/l),8.796072235
+25.0,1,TT,chla concentration (ug/l),2.297592175
+25.0,2,TT,chla concentration (ug/l),2.828261851
+25.0,3,TT,chla concentration (ug/l),3.456764485
+25.0,4,TT,chla concentration (ug/l),2.760075245
+25.0,5,TT,chla concentration (ug/l),2.745252069
+32.0,1,TT,chla concentration (ug/l),2.383566591
+32.0,2,TT,chla concentration (ug/l),2.469541008
+32.0,3,TT,chla concentration (ug/l),2.519939804
+32.0,4,TT,chla concentration (ug/l),6.382859293
+32.0,5,TT,chla concentration (ug/l),2.923130173
+38.0,1,TT,chla concentration (ug/l),2.350955606
+38.0,2,TT,chla concentration (ug/l),2.508081264
+38.0,3,TT,chla concentration (ug/l),2.573303236
+38.0,4,TT,chla concentration (ug/l),2.537727615
+38.0,5,TT,chla concentration (ug/l),2.235334838
+5.0,1,CH,cell concentration (per ml),24871.0
+5.0,2,CH,cell concentration (per ml),22880.0
+5.0,3,CH,cell concentration (per ml),25518.0
+5.0,4,CH,cell concentration (per ml),20623.0
+5.0,5,CH,cell concentration (per ml),22305.0
+8.0,1,CH,cell concentration (per ml),24075.0
+8.0,2,CH,cell concentration (per ml),27921.0
+8.0,3,CH,cell concentration (per ml),26807.0
+8.0,4,CH,cell concentration (per ml),40322.0
+8.0,5,CH,cell concentration (per ml),27079.0
+16.0,1,CH,cell concentration (per ml),30717.0
+16.0,2,CH,cell concentration (per ml),34936.0
+16.0,3,CH,cell concentration (per ml),28279.0
+16.0,4,CH,cell concentration (per ml),33691.0
+16.0,5,CH,cell concentration (per ml),30270.0
+25.0,1,CH,cell concentration (per ml),33914.0
+25.0,2,CH,cell concentration (per ml),31871.0
+25.0,3,CH,cell concentration (per ml),33600.0
+25.0,4,CH,cell concentration (per ml),30404.0
+25.0,5,CH,cell concentration (per ml),31915.0
+32.0,1,CH,cell concentration (per ml),4749.0
+32.0,2,CH,cell concentration (per ml),4851.0
+32.0,3,CH,cell concentration (per ml),NA
+32.0,4,CH,cell concentration (per ml),4868.0
+32.0,5,CH,cell concentration (per ml),NA
+38.0,1,CH,cell concentration (per ml),5219.0
+38.0,2,CH,cell concentration (per ml),2478.0
+38.0,3,CH,cell concentration (per ml),5068.0
+38.0,4,CH,cell concentration (per ml),4860.0
+38.0,5,CH,cell concentration (per ml),3888.0
+5.0,1,TT,cell concentration (per ml),22952.0
+5.0,2,TT,cell concentration (per ml),24140.0
+5.0,3,TT,cell concentration (per ml),24006.0
+5.0,4,TT,cell concentration (per ml),23296.0
+5.0,5,TT,cell concentration (per ml),23347.0
+8.0,1,TT,cell concentration (per ml),23606.0
+8.0,2,TT,cell concentration (per ml),24721.0
+8.0,3,TT,cell concentration (per ml),28217.0
+8.0,4,TT,cell concentration (per ml),24006.0
+8.0,5,TT,cell concentration (per ml),22399.0
+16.0,1,TT,cell concentration (per ml),33992.0
+16.0,2,TT,cell concentration (per ml),36927.0
+16.0,3,TT,cell concentration (per ml),17758.0
+16.0,4,TT,cell concentration (per ml),18867.0
+16.0,5,TT,cell concentration (per ml),16426.0
+25.0,1,TT,cell concentration (per ml),15774.0
+25.0,2,TT,cell concentration (per ml),16172.0
+25.0,3,TT,cell concentration (per ml),14560.0
+25.0,4,TT,cell concentration (per ml),13565.0
+25.0,5,TT,cell concentration (per ml),13730.0
+32.0,1,TT,cell concentration (per ml),8924.0
+32.0,2,TT,cell concentration (per ml),10356.0
+32.0,3,TT,cell concentration (per ml),9681.0
+32.0,4,TT,cell concentration (per ml),6815.0
+32.0,5,TT,cell concentration (per ml),6893.0
+38.0,1,TT,cell concentration (per ml),5788.0
+38.0,2,TT,cell concentration (per ml),9279.0
+38.0,3,TT,cell concentration (per ml),7732.0
+38.0,4,TT,cell concentration (per ml),6274.0
+38.0,5,TT,cell concentration (per ml),5045.0
+5.0,1,CH,total biovolume concentration (um3/ml),14987513.31
+5.0,2,CH,total biovolume concentration (um3/ml),14990747.200000001
+5.0,3,CH,total biovolume concentration (um3/ml),17003919.3
+5.0,4,CH,total biovolume concentration (um3/ml),13501053.18
+5.0,5,CH,total biovolume concentration (um3/ml),14533938.0
+8.0,1,CH,total biovolume concentration (um3/ml),16028412.75
+8.0,2,CH,total biovolume concentration (um3/ml),20482007.970000003
+8.0,3,CH,total biovolume concentration (um3/ml),22662369.73
+8.0,4,CH,total biovolume concentration (um3/ml),20017050.46
+8.0,5,CH,total biovolume concentration (um3/ml),19942329.55
+16.0,1,CH,total biovolume concentration (um3/ml),16554005.639999999
+16.0,2,CH,total biovolume concentration (um3/ml),19295502.159999996
+16.0,3,CH,total biovolume concentration (um3/ml),15415731.27
+16.0,4,CH,total biovolume concentration (um3/ml),20333192.32
+16.0,5,CH,total biovolume concentration (um3/ml),18191361.900000002
+25.0,1,CH,total biovolume concentration (um3/ml),18861949.38
+25.0,2,CH,total biovolume concentration (um3/ml),18477530.96
+25.0,3,CH,total biovolume concentration (um3/ml),17743824.0
+25.0,4,CH,total biovolume concentration (um3/ml),15790317.4
+25.0,5,CH,total biovolume concentration (um3/ml),15849946.45
+32.0,1,CH,total biovolume concentration (um3/ml),2800532.79
+32.0,2,CH,total biovolume concentration (um3/ml),764517.6
+32.0,3,CH,total biovolume concentration (um3/ml),NA
+32.0,4,CH,total biovolume concentration (um3/ml),3306686.36
+32.0,5,CH,total biovolume concentration (um3/ml),NA
+38.0,1,CH,total biovolume concentration (um3/ml),2402149.13
+38.0,2,CH,total biovolume concentration (um3/ml),806762.46
+38.0,3,CH,total biovolume concentration (um3/ml),2600390.8000000003
+38.0,4,CH,total biovolume concentration (um3/ml),1779877.8
+38.0,5,CH,total biovolume concentration (um3/ml),1434360.96
+5.0,1,TT,total biovolume concentration (um3/ml),24714713.599999998
+5.0,2,TT,total biovolume concentration (um3/ml),27761241.4
+5.0,3,TT,total biovolume concentration (um3/ml),25720028.400000002
+5.0,4,TT,total biovolume concentration (um3/ml),27936796.16
+5.0,5,TT,total biovolume concentration (um3/ml),26453084.88
+8.0,1,TT,total biovolume concentration (um3/ml),23429663.18
+8.0,2,TT,total biovolume concentration (um3/ml),26324898.480000004
+8.0,3,TT,total biovolume concentration (um3/ml),27914231.59
+8.0,4,TT,total biovolume concentration (um3/ml),24192046.5
+8.0,5,TT,total biovolume concentration (um3/ml),22863779.25
+16.0,1,TT,total biovolume concentration (um3/ml),26579024.639999997
+16.0,2,TT,total biovolume concentration (um3/ml),28353658.41
+16.0,3,TT,total biovolume concentration (um3/ml),20324386.16
+16.0,4,TT,total biovolume concentration (um3/ml),15993933.24
+16.0,5,TT,total biovolume concentration (um3/ml),13867650.5
+25.0,1,TT,total biovolume concentration (um3/ml),8330880.359999999
+25.0,2,TT,total biovolume concentration (um3/ml),10226687.64
+25.0,3,TT,total biovolume concentration (um3/ml),7227729.600000001
+25.0,4,TT,total biovolume concentration (um3/ml),8095185.05
+25.0,5,TT,total biovolume concentration (um3/ml),8584545.2
+32.0,1,TT,total biovolume concentration (um3/ml),6775190.04
+32.0,2,TT,total biovolume concentration (um3/ml),7452902.52
+32.0,3,TT,total biovolume concentration (um3/ml),7150096.170000001
+32.0,4,TT,total biovolume concentration (um3/ml),4877222.899999999
+32.0,5,TT,total biovolume concentration (um3/ml),4207556.13
+38.0,1,TT,total biovolume concentration (um3/ml),2866796.4
+38.0,2,TT,total biovolume concentration (um3/ml),5275018.71
+38.0,3,TT,total biovolume concentration (um3/ml),4219043.12
+38.0,4,TT,total biovolume concentration (um3/ml),3206327.7
+38.0,5,TT,total biovolume concentration (um3/ml),2225046.8000000003
+5.0,1,CH,cell size (um3),602.61
+5.0,2,CH,cell size (um3),655.19
+5.0,3,CH,cell size (um3),666.35
+5.0,4,CH,cell size (um3),654.66
+5.0,5,CH,cell size (um3),651.6
+8.0,1,CH,cell size (um3),665.77
+8.0,2,CH,cell size (um3),733.57
+8.0,3,CH,cell size (um3),845.39
+8.0,4,CH,cell size (um3),496.43
+8.0,5,CH,cell size (um3),736.45
+16.0,1,CH,cell size (um3),538.92
+16.0,2,CH,cell size (um3),552.31
+16.0,3,CH,cell size (um3),545.13
+16.0,4,CH,cell size (um3),603.52
+16.0,5,CH,cell size (um3),600.97
+25.0,1,CH,cell size (um3),556.17
+25.0,2,CH,cell size (um3),579.76
+25.0,3,CH,cell size (um3),528.09
+25.0,4,CH,cell size (um3),519.35
+25.0,5,CH,cell size (um3),496.63
+32.0,1,CH,cell size (um3),589.71
+32.0,2,CH,cell size (um3),157.6
+32.0,3,CH,cell size (um3),NA
+32.0,4,CH,cell size (um3),679.27
+32.0,5,CH,cell size (um3),NA
+38.0,1,CH,cell size (um3),460.27
+38.0,2,CH,cell size (um3),325.57
+38.0,3,CH,cell size (um3),513.1
+38.0,4,CH,cell size (um3),366.23
+38.0,5,CH,cell size (um3),368.92
+5.0,1,TT,cell size (um3),1076.8
+5.0,2,TT,cell size (um3),1150.01
+5.0,3,TT,cell size (um3),1071.4
+5.0,4,TT,cell size (um3),1199.21
+5.0,5,TT,cell size (um3),1133.04
+8.0,1,TT,cell size (um3),992.53
+8.0,2,TT,cell size (um3),1064.88
+8.0,3,TT,cell size (um3),989.27
+8.0,4,TT,cell size (um3),1007.75
+8.0,5,TT,cell size (um3),1020.75
+16.0,1,TT,cell size (um3),781.92
+16.0,2,TT,cell size (um3),767.83
+16.0,3,TT,cell size (um3),1144.52
+16.0,4,TT,cell size (um3),847.72
+16.0,5,TT,cell size (um3),844.25
+25.0,1,TT,cell size (um3),528.14
+25.0,2,TT,cell size (um3),632.37
+25.0,3,TT,cell size (um3),496.41
+25.0,4,TT,cell size (um3),596.77
+25.0,5,TT,cell size (um3),625.24
+32.0,1,TT,cell size (um3),759.21
+32.0,2,TT,cell size (um3),719.67
+32.0,3,TT,cell size (um3),738.57
+32.0,4,TT,cell size (um3),715.66
+32.0,5,TT,cell size (um3),610.41
+38.0,1,TT,cell size (um3),495.3
+38.0,2,TT,cell size (um3),568.49
+38.0,3,TT,cell size (um3),545.66
+38.0,4,TT,cell size (um3),511.05
+38.0,5,TT,cell size (um3),441.04

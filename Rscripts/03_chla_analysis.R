@@ -75,3 +75,4 @@ all_long %>%
 ggplot(aes(x = temperature, y = obs, color = species, group = species)) + geom_point(size = 4) +
 	facet_wrap( ~ type, scales = "free") + theme_bw()
 
+write_csv(all_long, "data-processed/CH_TT_chla_biovolume_final_time.csv")

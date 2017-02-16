@@ -80,7 +80,7 @@ mod1 <- lm(phosphate_standard ~ absorbance, data = standards_phosphate)
 
 df %>% rowwise() %>% mutate(Min = min(A, B, C), Mean = mean(c(A, B, C)))
 
-?add_predictions
+
 phosphate_measured <- phosphate %>% 
 	rowwise() %>% 
 	mutate(absorbance_mean = mean(c(absorbance, absorbance2))) %>% 
