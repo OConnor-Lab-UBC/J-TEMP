@@ -269,8 +269,8 @@ DataToPlot <- na.omit(DataToPlot)
 
 
 	
-ggplot(data = all_estimates, aes(x = n, y = estimate)) + geom_point() +
-	facet_wrap( ~ term, scales = "free")
+ggplot(data = all_estimates, aes(x = n, y = estimate)) + geom_point(size = 3) +
+	facet_wrap( ~ term, scales = "free") + theme_bw()
 
 # plot it! ----------------------------------------------------------------
 
@@ -314,8 +314,8 @@ coefs_TT <- TT_split %>%
 
 write_csv(coefs_TT, "data-processed/fitted_r_TT_2015.csv")
 
-ggplot(data = coefs_TT, aes(x = ntreatment, y = estimate)) + geom_point() +
-	facet_wrap( ~ term, scales = "free")
+ggplot(data = coefs_TT, aes(x = ntreatment, y = estimate)) + geom_point(size = 3) +
+	facet_wrap( ~ term, scales = "free") + theme_bw()
 
 
 schoolfield_nls <- NA

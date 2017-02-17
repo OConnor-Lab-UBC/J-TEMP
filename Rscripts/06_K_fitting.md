@@ -306,5 +306,31 @@ ggplot(aes(x = temperature, y = obs)) + geom_point(size = 4, color = "blue", alp
 ![](06_K_fitting_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 
+### Thermal performance curves
 
 
+```r
+TT <- read_csv("/Users/Joey/Documents/J-TEMP/data-raw/TT_2015.csv")
+TT %>% 
+	group_by(Temperature, N.Treatment) %>% 
+	do(tidy(nls(Particles.per.ml ~ 75 * (1+a)^(Hours.since.Innoc),
+							data= .,  start=list(a=0.01),
+							control = nls.control(maxiter=100, minFactor=1/204800000)))) %>%
+	ggplot(aes(x = Temperature, y = estimate, color = factor(N.Treatment))) + geom_point(size = 4) +
+	geom_line(size = 2) + theme_bw() + facet_wrap( ~ N.Treatment) + ylab("population growth rate")
+```
+
+![](06_K_fitting_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+
+Activation energies for population growth rate, r
+Fit using the schoolfield model
+
+
+```r
+coefs_TT <- read_csv("/Users/Joey/Documents/J-TEMP/data-processed/fitted_r_TT_2015.csv")
+
+ggplot(data = coefs_TT, aes(x = ntreatment, y = estimate)) + geom_point(size = 3) +
+	facet_wrap( ~ term, scales = "free") + theme_bw()
+```
+
+![](06_K_fitting_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
