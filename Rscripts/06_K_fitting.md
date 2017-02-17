@@ -1,4 +1,4 @@
-# carrying capacity analysis for Tetraselmis tetrahele
+# How does carrying capacity vary with temperature?
 
 
 
@@ -25,7 +25,7 @@ _How does carrying capacity vary with temperature?_
 
 ### Estimate activation energies for photosynthesis and respiration
 
-Read in metabolic rate
+Since we are testing the prediction that carrying capacity scales with the inverse of the activation energy of photosynthesis in autotrophs (Savage et al. 2004), we first need to estimate the Ea of photosynthesis. We do that here empirically with T. Tetrahelis by measuring rates of oxygen flux in the light and dark in the lab. 
 
 *Note! these are practice respirometry data from Scenesdesmus obliquus...I expect the T. Tetrahelis data to look a little different*
 
@@ -79,7 +79,7 @@ all_cells_TT <-	sea %>%
 	filter(!grepl("NA", ID)) 
 ```
 
-### Define models
+### Logistic growth model
 
 Define our logisitic growth model
 
@@ -323,6 +323,7 @@ TT %>%
 ![](06_K_fitting_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 Activation energies for population growth rate, r
+
 Fit using the schoolfield model
 
 
