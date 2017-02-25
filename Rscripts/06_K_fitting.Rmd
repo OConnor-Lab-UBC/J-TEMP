@@ -292,7 +292,8 @@ output_TT %>%
 	# filter(K < 50000000) %>% 
 	# filter(r < 1) %>% ## these are weirdo fits. Will come back to seeing if I can fix this
 	filter(temperature < 30) %>% 
-	ggplot(aes(x = temperature, y = log(K))) + geom_point(size = 3) + geom_smooth(method = lm) + theme_bw() + ylab("ln carrying capacity (biovolume um3/ml)")
+	ggplot(aes(x = temperature, y = log(K))) + geom_point(size = 4, alpha = 0.5, color = "blue") + geom_smooth(method = lm) + theme_bw() + ylab("ln K (biovolume um3/ml)") + xlab("temperature (C)") + theme(text = element_text(size=20))
+ggsave("/Users/Joey/Documents/J-TEMP/figures/k-temp-TT.png", width = 7, height = 5)
 
 ```
 
