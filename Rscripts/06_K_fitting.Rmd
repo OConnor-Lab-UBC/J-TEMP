@@ -111,15 +111,15 @@ metabolic_rate_data %>%
 Read in time series population dynamics data
 ```{r message=FALSE, warning=FALSE}
 sea <- read_csv("/Users/Joey/Documents/J-TEMP/data-processed/sea_processed.csv")
-all_cells_TT <-	sea %>%
-	filter(species == "TT") %>% 
-	unite(Unique_ID, temperature, rep, remove = FALSE) %>%  
-	rename(replicate = rep) %>% 
-	rename(P = total_biovolume,
-				 days = time_since_innoc_days,
-				 ID = Unique_ID) %>% 
-	arrange(ID, days) %>% 
-	filter(!grepl("NA", ID)) 
+	all_cells_TT <-	sea %>%
+		filter(species == "TT") %>% 
+		unite(Unique_ID, temperature, rep, remove = FALSE) %>%  
+		rename(replicate = rep) %>% 
+		rename(P = total_biovolume,
+					 days = time_since_innoc_days,
+					 ID = Unique_ID) %>% 
+		arrange(ID, days) %>% 
+		filter(!grepl("NA", ID)) 
 ```
 
 ### Logistic growth model

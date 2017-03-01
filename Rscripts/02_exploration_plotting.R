@@ -95,12 +95,14 @@ grid.arrange(so_biovol_plot, phosphate_plot, nrow = 2)
 
 jtemp %>% 
 	filter(species == "CR", temperature != "35") %>%
+	# filter(temperature < 35) %>% 
+	filter(total_biovolume < 10^8) %>% 
 	group_by(rep) %>% 
-	ggplot(data = ., aes(x = time_since_innoc_hours, group = factor(rep), y = cell_density)) +
+	ggplot(data = ., aes(x = time_since_innoc_hours, group = factor(rep), y = total_biovolume)) +
 	# geom_point(size = 4) +
 	geom_point() + 
 	geom_line() +
-	facet_wrap( ~ temperature, scales = "free")
+	facet_wrap( ~ temperature)
 
 
 
