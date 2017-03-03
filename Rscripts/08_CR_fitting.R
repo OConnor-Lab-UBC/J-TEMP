@@ -131,7 +131,7 @@ output_CR_all %>%
 	separate(ID, into = c("temperature", "rep"), remove = FALSE) %>% 
 	filter(K < 10^9) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
-	filter(temperature > 7, temperature < 38) %>% 
+	# filter(temperature > 7, temperature < 38) %>% 
 	ggplot(aes(x = temperature, y = log(K))) + geom_point(size = 5, alpha = 0.5) + theme_bw() +
 	ylab("ln carrying capacity (K)") + xlab("temperature (C)") + ggtitle("Chlamydomonas rheinhardtii")
 

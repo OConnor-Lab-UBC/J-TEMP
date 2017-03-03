@@ -5,6 +5,7 @@
 
 library(tidyverse)
 library(modelr)
+library(gridExtra)
 
 
 # read in data ------------------------------------------------------------
@@ -107,5 +108,34 @@ ggplot(data = phosphate_samples, aes( x = temperature, y = phosphate_concentrati
 
 
 
+nitrate <- read_csv("data-processed/nitrate_processed.csv")
 
 
+str(nitrate)
+str(final_time_data)
+nitrate_plot <- nitrate %>% 
+	mutate(temp = as.numeric(temp)) %>% 
+	filter(species == "TT") %>% 
+	filter(temp < 32) %>% 
+	ggplot(aes(x = temp, y = nitrate)) + geom_point(size = 6, alpha = 0.5) + theme_bw() + xlim(5,25) +
+	theme(text = element_text(size = 20)) + ylab("nitrate (uM N)") + xlab("temperature (C)") + geom_smooth(method = "lm")
+ggsave("figures/TT_nitrate_final.png", width = 8, height = 6)
+
+
+final_time_data <- read_csv("data-processed/CH_TT_chla_biovolume_final_time.csv")
+
+cell_size_plot <- final_time_data %>% 
+	filter(species == "TT", type == "cell size (um3)") %>% 
+	filter(temperature < 32) %>% 
+	ggplot(aes(x = temperature, y = obs)) + geom_point(size = 6, alpha = 0.5) + theme_bw() +
+	theme(text = element_text(size = 20)) + ylab("cell size (um3)") + xlab("temperature (C)") + geom_smooth(method = "lm")
+
+final_biovolume <- final_time_data %>% 
+	filter(species == "TT", type == "total biovolume concentration (um3/ml)") %>% 
+	filter(temperature < 32) %>% 
+	ggplot(aes(x = temperature, y = obs)) + geom_point(size = 6, alpha = 0.5) + theme_bw() +
+	theme(text = element_text(size = 20)) + ylab("total biovolume (um3/ml)") + xlab("temperature (C)") + geom_smooth(method = "lm")
+
+
+
+grid.arrange(nitrate_plot, cell_size_plot, final_biovolume, nrow =3)
