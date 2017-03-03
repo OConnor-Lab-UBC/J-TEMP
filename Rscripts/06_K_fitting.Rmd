@@ -115,7 +115,7 @@ sea <- read_csv("/Users/Joey/Documents/J-TEMP/data-processed/sea_processed.csv")
 		filter(species == "TT") %>% 
 		unite(Unique_ID, temperature, rep, remove = FALSE) %>%  
 		rename(replicate = rep) %>% 
-		rename(P = total_biovolume,
+		rename(P = cell_density,
 					 days = time_since_innoc_days,
 					 ID = Unique_ID) %>% 
 		arrange(ID, days) %>% 
@@ -137,7 +137,8 @@ CRmodel <- new("odeModel",
 							 },
 							 parms = Parameters,
 							 times = c(from = 0, to = 43, by = 0.1), # the time interval over which the model will be simulated.
-							 init = c(P = 971410.2), # starting biovolume
+							  init = c(P = 2000),
+							 # init = c(P = 971410.2), # starting biovolume
 							 solver = "lsoda" #lsoda will be called with tolerances of 1e-9. Default tolerances are both 1e-6. Lower is more accurate.
 )
 
@@ -223,10 +224,10 @@ output <- bind_rows(observeddata, simulateddata) ## plop everything together int
 Set upper and lower bounds and initial guesses for our parameters
 ```{r}
 Parameters <- c(r = 1, K = 10 ^ 7)
-
+Parameters <- c(r = 1, K = 10 ^ 5)
 # Declare the parameters to be used as the bounds for the fitting algorithm
 LowerBound <- c(r = 0.01, K = 10 ^ 2)
-UpperBound <- c(r = 10, K = 10 ^ 9) 
+UpperBound <- c(r = 10, K = 10 ^ 7) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -243,6 +244,10 @@ output_TT <- TT_split %>%
 	map_df(controlfit)
 
 write_csv(output_TT, "/Users/Joey/Documents/J-TEMP/data-processed/output_rK_TT.csv")
+write_csv(output_TT, "/Users/Joey/Documents/J-TEMP/data-processed/output_rK_TT_cell_abundance.csv")
+
+## just for now, rename the output_TT as output_TT_abundance
+output_TT_abundance <- output_TT
 ```
 
 
@@ -256,7 +261,8 @@ obs_sim_data %>%
 	mutate(temperature = as.numeric(temperature)) %>% 
 	mutate(type = str_replace(type, "simulated", "fit"))
 
-write_csv(obs_sim_data, "/Users/Joey/Documents/J-TEMP/data-processed/TT_obs_sim_data.csv")
+# write_csv(obs_sim_data, "/Users/Joey/Documents/J-TEMP/data-processed/TT_obs_sim_data.csv")
+write_csv(obs_sim_data, "/Users/Joey/Documents/J-TEMP/data-processed/TT_obs_sim_data_cell_abundance.csv")
 ```
 
 
@@ -289,12 +295,13 @@ Plot K vs. temperature (for the temperatures below Topt...32 and 38 are above To
 output_TT %>% 
 	separate(ID, into = c("temperature", "rep")) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
-	# filter(K < 50000000) %>% 
+	filter(log(K) < 18) %>% 
 	# filter(r < 1) %>% ## these are weirdo fits. Will come back to seeing if I can fix this
-	filter(temperature < 30) %>% 
-	ggplot(aes(x = temperature, y = log(K))) + geom_point(size = 4, alpha = 0.5, color = "blue") + geom_smooth(method = lm) + theme_bw() + ylab("ln K (biovolume um3/ml)") + xlab("temperature (C)") + theme(text = element_text(size=20))
+	# filter(temperature < 38) %>% 
+	ggplot(aes(x = temperature, y = log(K))) + geom_point(size = 4, alpha = 0.5, color = "black") + geom_smooth(method = lm, color = "black") + theme_bw() + ylab("ln K (biovolume um3/mL)") + xlab("temperature (C)") + theme(text = element_text(size=20))
 ggsave("/Users/Joey/Documents/J-TEMP/figures/k-temp-TT.png", width = 7, height = 5)
-
+ggsave("/Users/Joey/Documents/J-TEMP/figures/k-temp-TT-incl32.png", width = 7, height = 5)
+ggsave("/Users/Joey/Documents/J-TEMP/figures/k-cell-abundance-temp-TT-32.png", width = 7, height = 5)
 ```
 
 
@@ -303,8 +310,9 @@ Get the activation energy of K (for the temperatures below Topt...32 and 38 are 
 output_TT %>% 
 	separate(ID, into = c("temperature", "rep")) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
-	filter(temperature < 30) %>% 
-	# filter(K < 50000000) %>%
+	filter(log(K) < 18) %>% 
+	# filter(temperature < 35) %>% 
+	# filter(K < 10^7) %>%
 	# filter(r < 1) %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	do(tidy(lm(log(K) ~ inverse_temp, data = .), conf.int = TRUE)) %>% 
