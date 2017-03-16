@@ -118,7 +118,7 @@ nitrate_plot <- nitrate %>%
 	filter(species == "TT") %>% 
 	filter(temp < 32) %>% 
 	ggplot(aes(x = temp, y = nitrate)) + geom_point(size = 6, alpha = 0.5) + theme_bw() + xlim(5,25) +
-	theme(text = element_text(size = 20)) + ylab("nitrate (uM N)") + xlab("temperature (C)") + geom_smooth(method = "lm")
+	theme(text = element_text(size = 20)) + ylab("nitrate (uM N)") + xlab("temperature (C)") + geom_smooth(method = "lm", color = "grey")
 ggsave("figures/TT_nitrate_final.png", width = 8, height = 6)
 
 
@@ -128,14 +128,15 @@ cell_size_plot <- final_time_data %>%
 	filter(species == "TT", type == "cell size (um3)") %>% 
 	filter(temperature < 32) %>% 
 	ggplot(aes(x = temperature, y = obs)) + geom_point(size = 6, alpha = 0.5) + theme_bw() +
-	theme(text = element_text(size = 20)) + ylab("cell size (um3)") + xlab("temperature (C)") + geom_smooth(method = "lm")
+	theme(text = element_text(size = 20)) + ylab("cell size (um3)") + xlab("temperature (C)") + geom_smooth(method = "lm", color = "grey")
 
 final_biovolume <- final_time_data %>% 
 	filter(species == "TT", type == "total biovolume concentration (um3/ml)") %>% 
 	filter(temperature < 32) %>% 
 	ggplot(aes(x = temperature, y = obs)) + geom_point(size = 6, alpha = 0.5) + theme_bw() +
-	theme(text = element_text(size = 20)) + ylab("total biovolume (um3/ml)") + xlab("temperature (C)") + geom_smooth(method = "lm")
+	theme(text = element_text(size = 20)) + ylab("total biovolume (um3/ml)") + xlab("temperature (C)") + geom_smooth(method = "lm", color = "grey")
 
 
 
-grid.arrange(nitrate_plot, cell_size_plot, final_biovolume, nrow =3)
+p <- grid.arrange(nitrate_plot, cell_size_plot, final_biovolume, nrow =3)
+ggsave("figures/nitrate-cellsize-biovolume-plot.png", p)

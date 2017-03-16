@@ -9,7 +9,7 @@ library(tidyverse)
 library(stringr)
 library(plotrix)
 library(lubridate)
-
+library(broom)
 
 # read in data ------------------------------------------------------------
 
@@ -51,7 +51,7 @@ dec9 <- jtemp %>%
 	select(temperature, rep, species, cell_density, total_biovolume, cell_volume) %>% 
 	unite(uniqueid, temperature, rep, species)
 
-?unite
+
 
 all <- left_join(chla, dec9, by = "uniqueid") %>% 
 	distinct(uniqueid, .keep_all = TRUE) %>% 
@@ -87,8 +87,13 @@ all %>%
 do(tidy(lm(cell_density ~ temperature, data = .), conf.int = TRUE)) %>% View
 
 all %>% 
-	filter(species == "TT") %>% 
+	filter(species == "TT") %>%
+	# filter(temperature < 33) %>% 
 	lm(cell_volume ~ temperature, data =.) %>% summary()
+
+all %>% 
+	filter(species == "TT") %>%
+	ggplot(aes(x = temperature, y = cell_volume)) + geom_point() + geom_smooth(method = "lm")
 
 
 write_csv(all_long, "data-processed/CH_TT_chla_biovolume_final_time.csv")
@@ -114,3 +119,33 @@ jtemp %>%
 	filter(cell_volume != 1776.750) %>% 
 	mutate(start_time = ifelse(time_since_innoc_days == 0.5, "2016-10-28", start_time)) %>% 
 	filter(temperature == 38) %>% View
+
+
+(-17/750)*100
+
+## k0 is the ref K
+## m is body mass at ref temp
+## s is the percentage change in body mass with each degree increase in temperature
+## t is the temperature
+## k is boltzman's constant
+## EP is the activation energy of photosynthesis
+
+
+KMT <- function(k0, m, s, EP, k, t) k0*((m + ((-s/100)*m)*(t-273.15))^(-3/4))*exp(-EP/(k*t))
+
+## now add curve for K without TSR, shown in blue
+curve(KMT(k0 = 100000, m = 1000, s = 0, EP = -0.32, k = 8.62 * 10^(-5), x), from=273.15+0, to=273.15+25, xlab="Temperature (Kelvins)", col = "blue", lwd = 3)
+
+
+## draw K curve with TSR (in green)
+curve(KMT(k0 = 100000, m = 1000, s = 2.26, EP = -0.32, k = 8.62 * 10^(-5), x), from=273.15+0, to=273.15+25,
+			xlab="Temperature (Kelvins)", ylab="log(K)", col = "green", add = TRUE, lwd = 3)
+
+
+kpred <- read_csv("data-processed/k-tsr-pred.csv")
+
+kpred %>% 
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*kelvin)) %>% 
+	group_by(treatment) %>% 
+	do(tidy(lm(log(k) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+	
