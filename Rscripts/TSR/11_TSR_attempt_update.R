@@ -159,7 +159,8 @@ kpred4 <- kpred2 %>%
 
 k_obs_3 <- k_obs2 %>%
 	mutate(temperature = as.numeric(temperature)) %>% 
-	filter(temperature < 26)
+	filter(temperature < 26) %>% 
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*temperature_kelvin))
 
 ggplot() + 
 	geom_point(aes(x = temperature_kelvin, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) +
@@ -167,4 +168,78 @@ ggplot() +
 	geom_line(aes(x = kelvin, y = pred-9.5), data = kpred4, color = "cadetblue", size = 2) +
 	xlim(273.15, 273.15 + 25) + theme_bw() + xlab("temperature (kelvin)") + ylab("ln carrying capacity (K)") +
 	theme(text = element_text(size=20))
-	
+
+
+ggplot() + 
+	geom_point(aes(x = inverse_temp, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) +
+	# geom_line(aes(x = inverse_temp, y = pred-9.5), data = kpred3, color = "black", size = 2) +
+	geom_line(aes(x = inverse_temp, y = pred-9.5), data = kpred4, color = "cadetblue", size = 2) +
+	theme_bw() + xlab("temperature (1/kT)") + ylab("ln carrying capacity (K)") +
+	theme(text = element_text(size=20)) + 
+	scale_x_reverse(limits = c(42, 38.75))
+
+
+ggplot() + 
+	geom_point(aes(x = inverse_temp, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) +
+	geom_smooth(method = "lm") + 
+	# # geom_line(aes(x = inverse_temp, y = pred-9.5), data = kpred3, color = "black", size = 2) +
+	# geom_line(aes(x = inverse_temp, y = pred-9.5), data = kpred4, color = "cadetblue", size = 2) +
+	theme_bw() + xlab("temperature (1/kT)") + ylab("ln carrying capacity (K)") +
+	theme(text = element_text(size=20))
+	# scale_x_reverse(limits = c(42, 38.75))
+
+## prediction line
+ggplot() + 
+	ggplot(aes(x = inverse_temp, y = log(K))) + geom_point(size = 6, alpha = 0.5) +geom_smooth(method = "lm", color = "black", size = 3) +
+	geom_line(aes(x = inverse_temp, y = pred-9.52), data = kpred4, color = "cadetblue", size = 3) +
+	# geom_line(aes(x = inverse_temp, y = pred-9.55), data = kpred3, color = "red", size = 3)+
+	scale_x_reverse(limits = c(42, 38.75)) +
+	theme_bw() + xlab("temperature (1/kT)") + ylab("ln carrying capacity (K)") +
+	theme(text = element_text(size=20))
+ggsave("figures/k-temp-prediction-line.pdf")
+
+## now with data
+
+ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) + geom_point(size = 6, alpha = 0.5)+
+	geom_smooth(method = "lm", color = "black", size = 3) + 
+	geom_line(aes(x = inverse_temp, y = pred-9.52), data = kpred4, color = "cadetblue", size = 3) +
+	# geom_line(aes(x = inverse_temp, y = pred-9.55), data = kpred3, color = "red", size = 3)+
+	scale_x_reverse(limits = c(42, 38.75)) +
+	theme_bw() + xlab("temperature (1/kT)") + ylab("ln carrying capacity (K)") +
+	theme(text = element_text(size=20))
+ggsave("figures/k-temp-prediction-line-with-data.pdf")
+
+
+## now with new prediction
+
+ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) + geom_point(size = 6, alpha = 0.5)+
+	geom_smooth(method = "lm", color = "black", size = 3) + 
+	geom_line(aes(x = inverse_temp, y = pred-9.52), data = kpred4, color = "cadetblue", size = 3) +
+	geom_line(aes(x = inverse_temp, y = pred-9.55), data = kpred3, color = "orange", size = 3)+
+	scale_x_reverse(limits = c(42, 38.75)) +
+	theme_bw() + xlab("temperature (1/kT)") + ylab("ln carrying capacity (K)") +
+	theme(text = element_text(size=20))
+ggsave("figures/k-temp-prediction-line-with-data-new-pred.pdf")
+
+
+k_obs_biovolume <- read_csv("data-processed/output_rK_TT.csv")
+
+k_obs2_biovolume <- k_obs_biovolume %>% 
+	separate(ID, into = c("temperature", "replicate")) %>%
+	mutate(temperature_kelvin = as.numeric(temperature) + 273.15) %>% 
+	filter(K < 10^9)
+
+k_obs_3_biovolume <- k_obs2_biovolume %>%
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(temperature < 26) %>% 
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*temperature_kelvin))
+
+### now biovolume
+ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3_biovolume, size = 4, alpha = 0.5) + geom_point(size = 6, alpha = 0.5)+
+	geom_smooth(method = "lm", color = "black", size = 3) +
+	geom_line(aes(x = inverse_temp, y = pred-2.55), data = kpred4, color = "cadetblue", size = 3) +
+	scale_x_reverse(limits = c(42, 38.75)) +
+	theme_bw() + xlab("temperature (1/kT)") + ylab("ln population biomass(K)") +
+	theme(text = element_text(size=20))
+ggsave("figures/k-temp-prediction-line-with-biovolume.pdf")
+

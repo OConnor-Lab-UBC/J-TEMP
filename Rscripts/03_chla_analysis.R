@@ -149,3 +149,28 @@ kpred %>%
 	group_by(treatment) %>% 
 	do(tidy(lm(log(k) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 	
+
+
+
+### now try to see how k per mass changes with temp
+
+
+all2 <- all %>% 
+	unite(ID, temperature, replicate, sep = "_", remove = FALSE)
+
+?unite
+
+
+k_obs <- read_csv("data-processed/output_rK_TT_cell_abundance.csv")
+
+
+k_mass <- left_join(all2, k_obs)
+
+
+k_mass %>% 
+	mutate(mass_st_k = K/(cell_volume^(-3/4))) %>%
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	do(tidy(lm(log(mass_st_k) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+	
+	
