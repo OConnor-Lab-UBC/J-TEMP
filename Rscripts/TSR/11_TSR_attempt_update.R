@@ -150,7 +150,7 @@ no_tsr <- kpred2 %>%
 mod <- lm(log(k) ~ inverse_temp, data = tsr)
 mod_no_tsr <- lm(log(k) ~ inverse_temp, data = no_tsr)
 
-??modelr
+
 
 kpred3 <- kpred2 %>% 
 	add_predictions(mod, var = "pred") 
@@ -210,15 +210,21 @@ ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5)
 ggsave("figures/k-temp-prediction-line-with-data.pdf")
 
 
-## now with new prediction
+## now with new prediction (Figure 2 in paper)
 
-ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) + geom_point(size = 6, alpha = 0.5)+
-	geom_smooth(method = "lm", color = "black", size = 3) + 
-	geom_line(aes(x = inverse_temp, y = pred-9.52), data = kpred4, color = "cadetblue", size = 3) +
-	geom_line(aes(x = inverse_temp, y = pred-9.55), data = kpred3, color = "orange", size = 3)+
+ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) + geom_point(size = 4, alpha = 0.7)+
+	geom_smooth(method = "lm", color = "black", size = 0.5) + 
+	geom_line(aes(x = inverse_temp, y = pred-9.52), data = kpred4, color = "black", size = 1, linetype = "dotted") +
+	geom_line(aes(x = inverse_temp, y = pred-9.55), data = kpred3, color = "black", size = 1.5)+
 	scale_x_reverse(limits = c(42, 38.75)) +
-	theme_bw() + xlab("temperature (1/kT)") + ylab("ln carrying capacity (K)") +
-	theme(text = element_text(size=20))
+	theme_bw() + xlab("Temperature (1/kT)") + ylab("ln carrying capacity (K)") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+	theme(text = element_text(size=16, family = "Helvetica")) +
+	annotate("text", x = 41, y = 10.35, label = "prediction incorporating the \n temperature-size rule", size = 5) +
+	annotate("segment", x = 41.75, xend = 41.85, y = 10.34, yend = 10.27, colour="black", size=0.5, arrow = arrow(angle = 15, type = "closed", length = unit(0.03, "npc"))) +
+	annotate("text", x = 40.4, y = 9.4, label = "prediction with temperature \n independent body size", size = 5) +
+	annotate("segment", x = 39.65, xend = 39.4, y = 9.38, yend = 9.38, colour="black", size=0.5, arrow = arrow(angle = 20, type = "closed", length = unit(0.03, "npc"))) 
 ggsave("figures/k-temp-prediction-line-with-data-new-pred.pdf")
 
 
