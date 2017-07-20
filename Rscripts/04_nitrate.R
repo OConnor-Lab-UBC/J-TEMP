@@ -6,6 +6,7 @@
 library(tidyverse)
 library(modelr)
 library(gridExtra)
+library(cowplot)
 
 
 # read in data ------------------------------------------------------------
@@ -107,36 +108,75 @@ ggplot(data = standards_phosphate, aes(x = phosphate_standard, y = absorbance)) 
 ggplot(data = phosphate_samples, aes( x = temperature, y = phosphate_concentration)) + geom_point()
 
 
+### Figure 3 in paper 
 
 nitrate <- read_csv("data-processed/nitrate_processed.csv")
+final_time_data <- read_csv("data-processed/CH_TT_chla_biovolume_final_time.csv")
+
+nitrate_stats <- nitrate %>% 
+	mutate(temp = as.numeric(temp)) %>% 
+	filter(species == "TT") %>% 
+	filter(temp < 32) %>% 
+	do(tidy(lm(nitrate ~ temp, data = .), conf.int = TRUE)) 
 
 
-str(nitrate)
-str(final_time_data)
 nitrate_plot <- nitrate %>% 
 	mutate(temp = as.numeric(temp)) %>% 
 	filter(species == "TT") %>% 
 	filter(temp < 32) %>% 
-	ggplot(aes(x = temp, y = nitrate)) + geom_point(size = 6, alpha = 0.5) + theme_bw() + xlim(5,25) +
-	theme(text = element_text(size = 20)) + ylab("nitrate (uM N)") + xlab("temperature (C)") + geom_smooth(method = "lm", color = "grey")
-ggsave("figures/TT_nitrate_final.png", width = 8, height = 6)
+	ggplot(aes(x = temp, y = nitrate)) + geom_point(size = 3, alpha = 0.5) + theme_bw() + xlim(5,25) +
+	theme(text = element_text(size = 20)) + ylab("Nitrate (uM N)") +
+	# xlab(expression("Temperature (" *degree * "C)")) +
+	xlab("") +
+	geom_smooth(method = "lm", color = "grey") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+	theme(text = element_text(size=16, family = "Helvetica")) +
+	annotate("text", x = 16.3, y = 0.5, size = 5, label = "slope = 0.01, 95% CI: -0.09, 0.10")
+
+# ggsave("figures/TT_nitrate_final.png", width = 8, height = 6)
 
 
-final_time_data <- read_csv("data-processed/CH_TT_chla_biovolume_final_time.csv")
+final_time_data %>% 
+	filter(species == "TT", type == "cell size (um3)") %>% 
+	filter(temperature < 32) %>% 
+	do(tidy(lm(obs ~ temperature, data = .), conf.int = TRUE)) 
+
 
 cell_size_plot <- final_time_data %>% 
 	filter(species == "TT", type == "cell size (um3)") %>% 
 	filter(temperature < 32) %>% 
-	ggplot(aes(x = temperature, y = obs)) + geom_point(size = 6, alpha = 0.5) + theme_bw() +
-	theme(text = element_text(size = 20)) + ylab("cell size (um3)") + xlab("temperature (C)") + geom_smooth(method = "lm", color = "grey")
+	ggplot(aes(x = temperature, y = obs)) + geom_point(size = 3, alpha = 0.5) + theme_bw() +
+	theme(text = element_text(size = 20)) + ylab(bquote('Cell size ('*um^3*')')) +
+	xlab("") +
+	# xlab(expression("Temperature (" *degree * "C)")) +
+	geom_smooth(method = "lm", color = "grey") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+	theme(text = element_text(size=16, family = "Helvetica")) +
+	annotate("text", x = 16.3, y = 1, size = 5, label = "slope = -26.31, 95% CI: -31.64, -20.96")
+
+final_time_data %>% 
+	filter(species == "TT", type == "total biovolume concentration (um3/ml)") %>% 
+	filter(temperature < 32) %>% 
+	mutate(obs = obs/100000) %>% 
+	do(tidy(lm(obs ~ temperature, data = .), conf.int = TRUE)) 
 
 final_biovolume <- final_time_data %>% 
 	filter(species == "TT", type == "total biovolume concentration (um3/ml)") %>% 
 	filter(temperature < 32) %>% 
-	ggplot(aes(x = temperature, y = obs)) + geom_point(size = 6, alpha = 0.5) + theme_bw() +
-	theme(text = element_text(size = 20)) + ylab("total biovolume (um3/ml)") + xlab("temperature (C)") + geom_smooth(method = "lm", color = "grey")
+	mutate(obs = obs/100000) %>% 
+	ggplot(aes(x = temperature, y = obs)) + geom_point(size = 3, alpha = 0.5) + theme_bw() +
+	theme(text = element_text(size = 20)) + ylab(bquote('Biovolume ('*10^5~um^3~ml^-1*')')) + xlab(expression("Temperature (" *degree * "C)")) +  geom_smooth(method = "lm", color = "grey") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+	theme(text = element_text(size=16, family = "Helvetica")) +
+	annotate("text", x = 16.3, y = 1, size = 5, label = "slope = -8.81, 95% CI: -11.10, -6.53")
 
 
 
-p <- grid.arrange(nitrate_plot, cell_size_plot, final_biovolume, nrow =3)
-ggsave("figures/nitrate-cellsize-biovolume-plot.png", p)
+# p <- grid.arrange(nitrate_plot, cell_size_plot, final_biovolume, nrow =3)
+
+figure3 <- plot_grid(nitrate_plot, cell_size_plot, final_biovolume, labels = c("A", "B", "C"), align = "v", ncol = 1, nrow = 3)
+
+save_plot("figures/figure3.pdf", figure3, nrow = 3, ncol = 1, base_height = 4, base_width = 5)
