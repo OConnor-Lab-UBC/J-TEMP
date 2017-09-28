@@ -162,6 +162,10 @@ k_obs_3 <- k_obs2 %>%
 	filter(temperature < 26) %>% 
 	mutate(inverse_temp = 1/(8.62 * 10^(-5)*temperature_kelvin))
 
+k_obs_4 <- k_obs2 %>%
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*temperature_kelvin))
+
 ggplot() + 
 	geom_point(aes(x = temperature_kelvin, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) +
 	geom_line(aes(x = kelvin, y = pred-9.5), data = kpred3, color = "black", size = 2) +
@@ -212,20 +216,26 @@ ggsave("figures/k-temp-prediction-line-with-data.pdf")
 
 ## now with new prediction (Figure 2 in paper)
 
-ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) + geom_point(size = 4, alpha = 0.7)+
-	geom_smooth(method = "lm", color = "black", size = 0.5) + 
+ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) +
+	geom_smooth(method = "lm", color = "#386CB0", size = 0.5) + 
 	geom_line(aes(x = inverse_temp, y = pred-9.52), data = kpred4, color = "black", size = 1, linetype = "dotted") +
-	geom_line(aes(x = inverse_temp, y = pred-9.55), data = kpred3, color = "black", size = 1.5)+
+	geom_line(aes(x = inverse_temp, y = pred-9.55), data = kpred3, color = "black", size = 1, linetype = "dashed")+
+	geom_smooth(method = "lm", colour="#386CB0", size = 1, fill = "#386CB0") + 
+	geom_point(size = 4, alpha = 0.7, colour="#386CB0")+
+	geom_point(size = 4, shape = 1, color = "black")+
+	# geom_point(aes(x = inverse_temp, y = log(K)), data = k_obs_4, size = 4, alpha = 0.7)+
 	scale_x_reverse(limits = c(42, 38.75)) +
-	theme_bw() + xlab("Temperature (1/kT)") + ylab("ln carrying capacity (K)") +
+	# scale_x_reverse(limits = c(42, 37)) +
+	theme_bw() + xlab("Temperature (1/kT)") + ylab("Log carrying capacity (K)") +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
-	theme(text = element_text(size=16, family = "Helvetica")) +
-	annotate("text", x = 41, y = 10.35, label = "prediction incorporating the \n temperature-size rule", size = 5) +
-	annotate("segment", x = 41.75, xend = 41.85, y = 10.34, yend = 10.27, colour="black", size=0.5, arrow = arrow(angle = 15, type = "closed", length = unit(0.03, "npc"))) +
-	annotate("text", x = 40.4, y = 9.4, label = "prediction with temperature \n independent body size", size = 5) +
-	annotate("segment", x = 39.65, xend = 39.4, y = 9.38, yend = 9.38, colour="black", size=0.5, arrow = arrow(angle = 20, type = "closed", length = unit(0.03, "npc"))) 
+	theme(text = element_text(size=14, family = "Helvetica"))
+	# annotate("text", x = 41, y = 10.35, label = "prediction incorporating the \n temperature-size rule", size = 5) +
+	# annotate("segment", x = 41.75, xend = 41.85, y = 10.34, yend = 10.27, colour="black", size=0.5, arrow = arrow(angle = 15, type = "closed", length = unit(0.03, "npc"))) +
+	# annotate("text", x = 40.4, y = 9.4, label = "prediction with temperature \n independent body size", size = 5) +
+	# annotate("segment", x = 39.65, xend = 39.4, y = 9.38, yend = 9.38, colour="black", size=0.5, arrow = arrow(angle = 20, type = "closed", length = unit(0.03, "npc"))) 
 ggsave("figures/k-temp-prediction-line-with-data-new-pred.pdf")
+ggsave("figures/k-temp-prediction-line-with-data-new-pred.png", width = 6, height = 5)
 
 
 k_obs_biovolume <- read_csv("data-processed/output_rK_TT.csv")
