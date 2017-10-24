@@ -122,9 +122,9 @@ KMT <- function(x) 7.5*((1000 + ((-2/100)*1000)*(x-278.15))^(-3/4))*exp(0.32/(8.
 KMT2 <- function(x) 7.5*((1000 + ((0/100)*1000)*(x-278.15))^(-3/4))*exp(0.32/(8.62 * 10^(-5)*x))
 KMT3 <- function(x) 7.5*((1000 + ((-2.27/100)*1000)*(x-278.15))^(-3/4))*exp(0.32/(8.62 * 10^(-5)*x))
 
-
+KMT2 <- function(x)17*((1000 + ((0/100)*1000)*(x-278.15))^(-0.87))*exp(0.32/(8.62 * 10^(-5)*x)) ## black
+KMT3 <- function(x) 17*((1000 + ((-2.27/100)*1000)*(x-278.15))^(-0.87))*exp(0.32/(8.62 * 10^(-5)*x)) ## grey
 p <- ggplot(data = data.frame(x = 0), mapping = aes(x = x))
-
 p + geom_point(aes(x = temperature_kelvin, y = K), data = k_obs2, size = 0.5, alpha = 0) +
 	# stat_function(fun = KMT, color = "grey", size = 2) + 
 	stat_function(fun = KMT2, color = "black", size = 3) +
@@ -134,11 +134,15 @@ p + geom_point(aes(x = temperature_kelvin, y = K), data = k_obs2, size = 0.5, al
 	scale_y_continuous(trans = "log", breaks=seq(8000,30000,10000)) + theme_bw() +
 	xlab("temperature (kelvin)") + ylab("ln carrying capacity (K)") +
 	theme(text = element_text(size=20)) 
-ggsave("figures/k-abundance-w-predictions.png")
+ggsave("figures/k-abundance-w-predictions-0.87.png")
 
 kpred <- read_csv("data-processed/k-tsr-pred.csv")
 
-kpred2 <- kpred %>% 
+kpreda <- read_csv("data-processed/k-tsr-pred-isometric.csv")
+kpreda <- read_csv("data-processed/k-tsr-pred-isometric-0.87.csv")
+
+
+kpred2 <- kpreda %>% 
 	mutate(inverse_temp = 1/(8.62 * 10^(-5)*kelvin))
 
 tsr <- kpred2 %>% 
@@ -150,7 +154,9 @@ no_tsr <- kpred2 %>%
 mod <- lm(log(k) ~ inverse_temp, data = tsr)
 mod_no_tsr <- lm(log(k) ~ inverse_temp, data = no_tsr)
 
-
+summary(mod)
+tidy(mod, conf.int = TRUE)
+tidy(mod_no_tsr, conf.int = TRUE)
 
 kpred3 <- kpred2 %>% 
 	add_predictions(mod, var = "pred") 
@@ -218,8 +224,8 @@ ggsave("figures/k-temp-prediction-line-with-data.pdf")
 
 ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) +
 	geom_smooth(method = "lm", color = "#386CB0", size = 0.5) + 
-	geom_line(aes(x = inverse_temp, y = pred-9.52), data = kpred4, color = "black", size = 1, linetype = "dotted") +
-	geom_line(aes(x = inverse_temp, y = pred-9.55), data = kpred3, color = "black", size = 1, linetype = "dashed")+
+	geom_line(aes(x = inverse_temp, y = pred + 0.025), data = kpred4, color = "black", size = 1, linetype = "dotted") +
+	geom_line(aes(x = inverse_temp, y = pred + 0.045), data = kpred3, color = "black", size = 1, linetype = "dashed")+
 	geom_smooth(method = "lm", colour="#386CB0", size = 1, fill = "#386CB0") + 
 	geom_point(size = 4, alpha = 0.7, colour="#386CB0")+
 	geom_point(size = 4, shape = 1, color = "black")+
