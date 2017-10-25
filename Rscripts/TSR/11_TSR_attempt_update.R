@@ -3,14 +3,6 @@ library(tidyverse)
 library(modelr)
 
 
-KMT2 <- function(k0, m, EM, EP, k, t) k0*(m^(-3/4))*exp((3*EM - 4*EP)/(4*k*t))
-
-## draw K curve with TSR (in black)
-curve(KMT2(k0 = 10000, m = 100, EP = -0.32, EM = -0.01, k = 8.62 * 10^(-5), x), from=273.15-20, to=273.15+50, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y")
-
-## now add curve for K without TSR, shown in blue
-curve(KMT2(k0 = 10000, m = 100, EP = -0.32, EM = 0, k = 8.62 * 10^(-5), x), from=273.15-20, to=273.15+50, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y", add = TRUE, col = "blue")
-
 ## k0 is the ref K
 ## m is body mass
 ## s is the percentage change in body mass with each degree increase in temperature
@@ -97,26 +89,6 @@ k_obs2 <- k_obs %>%
 	filter(K < 10^7)
 
 
-geom_point(aes(x = temperature_kelvin, y = K), data = k_obs2, size = 3.5, alpha = 0.5) +
-### attempt to draw out the predicted curves
-
-
-KMT <- function(x) 6.5*((1000 + ((-2/100)*1000)*(x-273.15))^(-3/4))*exp(0.32/(8.62 * 10^(-5)*x))
-KMT2 <- function(x) 6.5*((1000 + ((0/100)*1000)*(x-273.15))^(-3/4))*exp(0.32/(8.62 * 10^(-5)*x))
-KMT3 <- function(x) 6.5*((1000 + ((-2.5/100)*1000)*(x-273.15))^(-3/4))*exp(0.32/(8.62 * 10^(-5)*x))
-
-
-p <- ggplot(data = data.frame(x = 0), mapping = aes(x = x))
-
-p + geom_point(aes(x = temperature_kelvin, y = K), data = k_obs2, size = 3.5, alpha = 0.5) +
-	stat_function(fun = KMT, color = "black", size = 2) +  stat_function(fun = KMT2, color = "cadetblue", size = 2) +
-	stat_function(fun = KMT3, color = "green", size = 2) +
-	xlim(273.15, 273.15 + 25) +
-	scale_y_continuous(trans = "log", breaks = 5) + theme_bw() +
- xlab("temperature (kelvin)") + ylab("ln carrying capacity (K)") +
-	theme(text = element_text(size=20))
-
-
 
 KMT <- function(x) 7.5*((1000 + ((-2/100)*1000)*(x-278.15))^(-3/4))*exp(0.32/(8.62 * 10^(-5)*x))
 KMT2 <- function(x) 7.5*((1000 + ((0/100)*1000)*(x-278.15))^(-3/4))*exp(0.32/(8.62 * 10^(-5)*x))
@@ -180,27 +152,10 @@ ggplot() +
 	theme(text = element_text(size=20))
 
 
-ggplot() + 
-	geom_point(aes(x = inverse_temp, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) +
-	# geom_line(aes(x = inverse_temp, y = pred-9.5), data = kpred3, color = "black", size = 2) +
-	geom_line(aes(x = inverse_temp, y = pred-9.5), data = kpred4, color = "cadetblue", size = 2) +
-	theme_bw() + xlab("temperature (1/kT)") + ylab("ln carrying capacity (K)") +
-	theme(text = element_text(size=20)) + 
-	scale_x_reverse(limits = c(42, 38.75))
-
-
-ggplot() + 
-	geom_point(aes(x = inverse_temp, y = log(K)), data = k_obs_3, size = 4, alpha = 0.5) +
-	geom_smooth(method = "lm") + 
-	# # geom_line(aes(x = inverse_temp, y = pred-9.5), data = kpred3, color = "black", size = 2) +
-	# geom_line(aes(x = inverse_temp, y = pred-9.5), data = kpred4, color = "cadetblue", size = 2) +
-	theme_bw() + xlab("temperature (1/kT)") + ylab("ln carrying capacity (K)") +
-	theme(text = element_text(size=20))
-	# scale_x_reverse(limits = c(42, 38.75))
 
 ## prediction line
-ggplot() + 
-	ggplot(aes(x = inverse_temp, y = log(K))) + geom_point(size = 6, alpha = 0.5) +geom_smooth(method = "lm", color = "black", size = 3) +
+ggplot() +	
+ggplot(aes(x = inverse_temp, y = log(K))) + geom_point(size = 6, alpha = 0.5) +geom_smooth(method = "lm", color = "black", size = 3) +
 	geom_line(aes(x = inverse_temp, y = pred-9.52), data = kpred4, color = "cadetblue", size = 3) +
 	# geom_line(aes(x = inverse_temp, y = pred-9.55), data = kpred3, color = "red", size = 3)+
 	scale_x_reverse(limits = c(42, 38.75)) +
@@ -265,3 +220,48 @@ ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3_biovolume, size = 4, al
 	theme(text = element_text(size=20))
 ggsave("figures/k-temp-prediction-line-with-biovolume.pdf")
 
+
+
+# now let’s try to actually make predictions ------------------------------
+
+x <- seq(278.15, 278.15+20, by = 0.01)
+tsr_pred <- function(x) {
+	y <- 7.5*((1000 + ((-2.27/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
+} 
+
+savage_pred <- function(x) {
+	y <- 4.9*((1000 + ((0/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
+} 
+
+tsr_predictions <- sapply(x, tsr_pred)
+savage_predictions <- sapply(x, savage_pred)
+pred_df <- data.frame(K_tsr = predictions, K_savage = savage_predictions, temperature_kelvin = x)
+
+pred_df2 <- pred_df %>% 
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*temperature_kelvin))
+
+
+	pred_df2 %>% 
+		lm(log(K_tsr) ~ inverse_temp, data = .) %>% 
+	tidy(., conf.int = TRUE)
+	
+	
+	pred_df2 %>% 
+		lm(log(K_savage) ~ inverse_temp, data = .) %>% 
+		tidy(., conf.int = TRUE)
+
+	ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3) + 
+		geom_smooth(method = "lm", color = "black") +
+	 geom_line(aes(x = inverse_temp, y = log(K_savage)), data = pred_df2, linetype = "dotted", size = 1) +
+		geom_smooth(method = "lm", color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed") +
+		theme_bw() + geom_point(size = 4, shape = 1, color = "black") +
+		geom_point(size = 4, alpha = 0.5) +
+		xlab("Temperature (1/kT)") + ylab("ln carrying capacity (cells/mL)") +
+		theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+					panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+		theme(text = element_text(size=14, family = "Helvetica")) +
+		scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
+		theme(plot.title = element_text(hjust = 0.5, size = 14))
+	ggsave("figures/k-temp-prediction-line-with-data-dual-axis.png", width = 6, height = 5)
+	
+?ggtitle
