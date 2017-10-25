@@ -264,4 +264,4 @@ pred_df2 <- pred_df %>%
 		theme(plot.title = element_text(hjust = 0.5, size = 14))
 	ggsave("figures/k-temp-prediction-line-with-data-dual-axis.png", width = 6, height = 5)
 	
-?ggtitle
+

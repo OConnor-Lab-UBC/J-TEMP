@@ -124,7 +124,8 @@ nitrate_plot <- nitrate %>%
 	mutate(temp = as.numeric(temp)) %>% 
 	filter(species == "TT") %>% 
 	filter(temp < 32) %>% 
-	ggplot(aes(x = temp, y = nitrate)) + geom_point(size = 3, alpha = 0.5) + theme_bw() + xlim(5,25) +
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temp + 275.15))) %>% 
+	ggplot(aes(x = inverse_temp, y = nitrate)) + geom_point(size = 3, alpha = 0.5) + theme_bw() + xlim(5,25) +
 	theme(text = element_text(size = 20)) + ylab("Nitrate (uM N)") +
 	# xlab(expression("Temperature (" *degree * "C)")) +
 	xlab("") +
@@ -132,6 +133,12 @@ nitrate_plot <- nitrate %>%
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 	theme(text = element_text(size=16, family = "Helvetica")) +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + 
+	xlab("") +
+	ggtitle("Temperature (°C)") +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	geom_point(size = 4, shape = 1, color = "black") +
+	geom_point(size = 4, alpha = 0.5)
 	annotate("text", x = 16.3, y = 0.5, size = 5, label = "slope = 0.01, 95% CI: -0.09, 0.10")
 
 # ggsave("figures/TT_nitrate_final.png", width = 8, height = 6)
@@ -146,14 +153,21 @@ final_time_data %>%
 cell_size_plot <- final_time_data %>% 
 	filter(species == "TT", type == "cell size (um3)") %>% 
 	filter(temperature < 32) %>% 
-	ggplot(aes(x = temperature, y = obs)) + geom_point(size = 3, alpha = 0.5) + theme_bw() +
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temperature + 275.15))) %>% 
+	ggplot(aes(x = inverse_temp, y = obs)) + geom_point(size = 3, alpha = 0.5) + theme_bw() +
 	theme(text = element_text(size = 20)) + ylab(bquote('Cell size ('*um^3*')')) +
 	xlab("") +
 	# xlab(expression("Temperature (" *degree * "C)")) +
-	geom_smooth(method = "lm", color = "grey") +
+	geom_smooth(method = "lm", color = "black") +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 	theme(text = element_text(size=16, family = "Helvetica")) +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) +
+	xlab("") +
+	# ggtitle("Temperature (°C)") +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	geom_point(size = 4, shape = 1, color = "black") +
+	geom_point(size = 4, alpha = 0.5)
 	annotate("text", x = 16.3, y = 1, size = 5, label = "slope = -26.31, 95% CI: -31.64, -20.96")
 
 final_time_data %>% 
@@ -165,12 +179,22 @@ final_time_data %>%
 final_biovolume <- final_time_data %>% 
 	filter(species == "TT", type == "total biovolume concentration (um3/ml)") %>% 
 	filter(temperature < 32) %>% 
-	mutate(obs = obs/100000) %>% 
-	ggplot(aes(x = temperature, y = obs)) + geom_point(size = 3, alpha = 0.5) + theme_bw() +
-	theme(text = element_text(size = 20)) + ylab(bquote('Biovolume ('*10^5~um^3~ml^-1*')')) + xlab(expression("Temperature (" *degree * "C)")) +  geom_smooth(method = "lm", color = "grey") +
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temperature + 275.15))) %>% 
+	# mutate(obs = obs/100000) %>% 
+	ggplot(aes(x = inverse_temp, y = log(obs))) + theme_bw() +
+	theme(text = element_text(size = 20)) +  geom_smooth(method = "lm", color = "black") +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 	theme(text = element_text(size=16, family = "Helvetica")) +
+	xlab("Temperature (1/kT)") + ylab(bquote('ln biovolume ('*um^3~ml^-1*')')) +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+	theme(text = element_text(size=14, family = "Helvetica")) +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
+	# ggtitle("Temperature (°C)") +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	geom_point(size = 4, shape = 1, color = "black") +
+	geom_point(size = 4, alpha = 0.5) +
 	annotate("text", x = 16.3, y = 1, size = 5, label = "slope = -8.81, 95% CI: -11.10, -6.53")
 
 
@@ -179,4 +203,4 @@ final_biovolume <- final_time_data %>%
 
 figure3 <- plot_grid(nitrate_plot, cell_size_plot, final_biovolume, labels = c("A", "B", "C"), align = "v", ncol = 1, nrow = 3)
 
-save_plot("figures/figure3.pdf", figure3, nrow = 3, ncol = 1, base_height = 4, base_width = 5)
+save_plot("figures/figure3.png", figure3, nrow = 3, ncol = 1, base_height = 3, base_width = 4)
