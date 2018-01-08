@@ -7,27 +7,102 @@ library(broom)
 library(stringr)
 library(lubridate)
 library(growthcurve)
+library(gridExtra)
 
 jtemp <- read_csv("data-processed/Jtemp_all.csv")
+nitrate_so <- read_csv("data-processed/nitrate_processed_SO.csv")
+phosphate_so <- read_csv("data-processed/SO_phosphate_concentrations.csv")
+
+
 
 jtemp %>%
 	filter(species == "SO") %>% 
-	filter(total_biovolume < 1000000000) %>% 
+  filter(total_biovolume < 1000000000) %>% 
 	group_by(temperature, rep) %>%
 	ggplot(aes(x = time_since_innoc_days, group = rep, y = total_biovolume, color = factor(temperature))) + geom_point(size = 4) +
 	geom_line() + 
-	facet_wrap( ~ temperature) + ggtitle("Scenedesmus obliquus") +
+	facet_wrap( ~ temperature, scales = "free") + ggtitle("SO") +
 	theme(axis.text.x = element_text(angle = 75, hjust = 1))
-	 
+
+
+nitrate_so_2 <- nitrate_so %>% 
+	mutate(new_temperature = ifelse(grepl("32", temperature), 25, temperature)) %>% 
+	mutate(new_temperature = ifelse(grepl("25", temperature), 32, new_temperature)) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(new_temperature = as.numeric(new_temperature)) %>% 
+	rename(`nitrate concentration (uM)` = nitrate_concentration)
+
+
+nitrate_plot <- ggplot(data = nitrate_so_2, aes(x = new_temperature, y = `nitrate concentration (uM)`, color = factor(rep))) + geom_point(size = 3) +
+	geom_hline(yintercept = 562.42)
+
+so_biovol_plot <- jtemp %>%
+	filter(species == "SO") %>% 
+	filter(start_time > "2017-01-06") %>%
+	ggplot(aes(x = temperature, y = total_biovolume, color = factor(rep)), data = .) + geom_point(size = 3)
+
+
+
+
+phosphate_plot <- phosphate_so %>% 
+	filter(absorbance != "0.0705") %>% 
+	# mutate(temperature = ifelse(species == "COMBO", 20, temperature)) %>%
+	ggplot(aes(x = temperature, y = phosphate_concentration, color = factor(rep))) + geom_point(size = 3)
+	
+
+
+
+grid.arrange(so_biovol_plot, phosphate_plot, nrow = 2)
+
+
+
+
+# average plots -----------------------------------------------------------
+
+nitrate_plot <- nitrate_so_2 %>% 
+	group_by(temperature) %>% 
+	summarise_each(funs(mean, std.error), `nitrate concentration (uM)`) %>% 
+	ggplot(data = ., aes(x = temperature, y = mean)) + geom_point(size = 3) +
+	geom_errorbar(aes(ymin = mean - std.error, ymax = mean+std.error), width = 0.1) +
+ theme_bw() + ylab("nitrate concentration (uM)")
+
+so_biovol_plot <- jtemp %>%
+	filter(species == "SO") %>% 
+	filter(start_time > "2017-01-06") %>%
+	group_by(temperature) %>% 
+	summarise_each(funs(mean, std.error), total_biovolume) %>% 
+	ggplot(data = ., aes(x = temperature, y = mean)) + geom_point(size = 3) +
+	geom_errorbar(aes(ymin = mean - std.error, ymax = mean+std.error), width = 0.1) +
+	theme_bw() + ylab("biovolume (um3)")
+
+
+
+phosphate_plot <- phosphate_so %>% 
+	filter(absorbance != "0.0705") %>% 
+	# mutate(temperature = ifelse(species == "COMBO", 20, temperature)) %>%
+	group_by(temperature) %>% 
+	summarise_each(funs(mean, std.error), phosphate_concentration) %>% 
+	ggplot(data = ., aes(x = temperature, y = mean)) + geom_point(size = 3) +
+	geom_errorbar(aes(ymin = mean - std.error, ymax = mean+std.error), width = 0.1) +
+	theme_bw() + ylab("phosphate concentration (uM)")
+
+
+
+
+grid.arrange(so_biovol_plot, phosphate_plot, nrow = 2)
+
+
 
 jtemp %>% 
 	filter(species == "CR", temperature != "35") %>%
+	# filter(temperature < 35) %>% 
+	filter(total_biovolume < 10^8) %>% 
 	group_by(rep) %>% 
-	ggplot(data = ., aes(x = time_since_innoc_hours, group = factor(rep), y = cell_density)) +
+	ggplot(data = ., aes(x = time_since_innoc_hours, group = factor(rep), y = total_biovolume)) +
 	# geom_point(size = 4) +
 	geom_point() + 
 	geom_line() +
-	facet_wrap( ~ temperature, scales = "free")
+	facet_wrap( ~ temperature)
 
 
 

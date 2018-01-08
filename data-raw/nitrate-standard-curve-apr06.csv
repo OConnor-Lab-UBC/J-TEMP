@@ -1,0 +1,13 @@
+concentration,absorbance,time
+0,0,morning
+0.5,0.004,morning
+1,0.065,morning
+2.5,0.013,morning
+5,0.057,morning
+50,0.344,morning
+100,0.654,morning
+0,0.125,afternoon
+100,0.525,afternoon
+250,1.149,afternoon
+300,1.226,afternoon
+500,2,afternoon
