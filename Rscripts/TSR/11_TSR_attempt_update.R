@@ -13,14 +13,25 @@ library(modelr)
 
 
 
+k0 = 100000
+m = 1000
+s = 0
+EP = -0.32
+k = 8.62 * 10^(-5)
 
-KMT <- function(k0, m, s, EP, k, t) k0*((m + s*(t-273.15))^(-3/4))*exp(-EP/(k*t))
-
-
-
+KMT <- function(k0, m, s, EP, k, t) k0*((m + s*(t-273.15))^(-3/4))*exp(EP/(k*t))
 
 ## draw K curve with TSR (in blue)
-curve(KMT(k0 = 10000, m = 500, s = 2.5, EP = -0.32, k = 8.62 * 10^(-5), x), from=273.15+5, to=273.15+20, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y", col = "blue", lwd = 3)
+curve(KMT(k0 = 10000, m = 500, s = 2.5, EP = 0.32, k = 8.62 * 10^(-5), x), from=273.15+5, to=273.15+20, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y", col = "blue", lwd = 3)
+
+RMT <- function(k0, m, s, EP, k, t) k0*((m + s*(t-273.15))^(3/4))*exp(-EP/(k*t))
+curve(RMT(k0 = 10, m = 50, s = 2.5, EP = 0.65, k = 8.62 * 10^(-5), x), from=273.15+5, to=273.15+20, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y", col = "blue", lwd = 3)
+
+## draw K curve with TSR (in blue)
+curve(KMT(k0 = 10000, m = 500, s = 2.5, EP = 0.65, k = 8.62 * 10^(-5), x), from=273.15+5, to=273.15+20, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y", col = "blue", lwd = 3)
+
+
+
 
 ## now add curve for K without TSR, shown in green
 curve(KMT(k0 = 10000, m = 500, s = 0, EP = -0.32, k = 8.62 * 10^(-5), x), from=273.15+5, to=273.15+20, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y", col = "green", add = TRUE, lwd = 3)
@@ -260,8 +271,32 @@ pred_df2 <- pred_df %>%
 		theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 					panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 		theme(text = element_text(size=14, family = "Helvetica")) +
-		scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
+		scale_x_continuous(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
 		theme(plot.title = element_text(hjust = 0.5, size = 14))
 	ggsave("figures/k-temp-prediction-line-with-data-dual-axis.png", width = 6, height = 5)
+
+
 	
+## messing around
+	
+
+KMT2 <- function(x) 7.5*((1000 + ((0/100)*1000)*(x-278.15))^(-3/4))*exp(-0.32/(8.62 * 10^(-5)*x))
+
+			
+	
+		ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3) + 
+		# geom_smooth(method = "lm", color = "black") +
+		# geom_line(aes(x = inverse_temp, y = log(K_savage)), data = pred_df2, linetype = "dotted", size = 1) +
+		# geom_smooth(method = "lm", color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed") +
+		theme_bw() +
+		# geom_point(size = 4, shape = 1, color = "black") +
+		# geom_point(size = 4, alpha = 0.5) +
+		xlab("Temperature (1/kT)") + ylab("ln carrying capacity (cells/mL)") +
+		theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+					panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+		theme(text = element_text(size=14, family = "Helvetica")) +
+		scale_x_continuous(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
+		theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
+			stat_function(fun = KMT2) + scale_y_log10()
+		
 

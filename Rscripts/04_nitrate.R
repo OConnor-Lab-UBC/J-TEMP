@@ -109,23 +109,26 @@ ggplot(data = phosphate_samples, aes( x = temperature, y = phosphate_concentrati
 
 
 ### Figure 3 in paper 
-
+library(tidyverse)
+library(broom)
 nitrate <- read_csv("data-processed/nitrate_processed.csv")
 final_time_data <- read_csv("data-processed/CH_TT_chla_biovolume_final_time.csv")
 
 nitrate_stats <- nitrate %>% 
+	mutate(temp = ifelse(temp == 24, 25, temp)) %>% 
 	mutate(temp = as.numeric(temp)) %>% 
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temp + 273.15))) %>% 
 	filter(species == "TT") %>% 
 	filter(temp < 32) %>% 
-	do(tidy(lm(nitrate ~ temp, data = .), conf.int = TRUE)) 
+	do(tidy(lm(log(nitrate) ~ inverse_temp, data = .), conf.int = TRUE)) 
 
 
 nitrate_plot <- nitrate %>% 
 	mutate(temp = as.numeric(temp)) %>% 
 	filter(species == "TT") %>% 
 	filter(temp < 32) %>% 
-	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temp + 275.15))) %>% 
-	ggplot(aes(x = inverse_temp, y = nitrate)) + geom_point(size = 3, alpha = 0.5) + theme_bw() + xlim(5,25) +
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temp + 273.15))) %>% 
+	ggplot(aes(x = inverse_temp, y = nitrate)) + theme_bw() + xlim(5,25) +
 	theme(text = element_text(size = 20)) + ylab("Nitrate (uM N)") +
 	# xlab(expression("Temperature (" *degree * "C)")) +
 	xlab("") +
@@ -153,8 +156,8 @@ final_time_data %>%
 cell_size_plot <- final_time_data %>% 
 	filter(species == "TT", type == "cell size (um3)") %>% 
 	filter(temperature < 32) %>% 
-	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temperature + 275.15))) %>% 
-	ggplot(aes(x = inverse_temp, y = obs)) + geom_point(size = 3, alpha = 0.5) + theme_bw() +
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temperature + 273.15))) %>% 
+	ggplot(aes(x = inverse_temp, y = obs)) + theme_bw() +
 	theme(text = element_text(size = 20)) + ylab(bquote('Cell size ('*um^3*')')) +
 	xlab("") +
 	# xlab(expression("Temperature (" *degree * "C)")) +
@@ -179,7 +182,7 @@ final_time_data %>%
 final_biovolume <- final_time_data %>% 
 	filter(species == "TT", type == "total biovolume concentration (um3/ml)") %>% 
 	filter(temperature < 32) %>% 
-	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temperature + 275.15))) %>% 
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temperature + 273.15))) %>% 
 	# mutate(obs = obs/100000) %>% 
 	ggplot(aes(x = inverse_temp, y = log(obs))) + theme_bw() +
 	theme(text = element_text(size = 20)) +  geom_smooth(method = "lm", color = "black") +
@@ -200,7 +203,7 @@ final_biovolume <- final_time_data %>%
 
 
 # p <- grid.arrange(nitrate_plot, cell_size_plot, final_biovolume, nrow =3)
-
+library(cowplot)
 figure3 <- plot_grid(nitrate_plot, cell_size_plot, final_biovolume, labels = c("A", "B", "C"), align = "v", ncol = 1, nrow = 3)
 
 save_plot("figures/figure3.png", figure3, nrow = 3, ncol = 1, base_height = 3, base_width = 4)

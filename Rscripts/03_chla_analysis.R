@@ -51,7 +51,12 @@ dec9 <- jtemp %>%
 	select(temperature, rep, species, cell_density, total_biovolume, cell_volume) %>% 
 	unite(uniqueid, temperature, rep, species)
 
-
+all %>% 
+	filter(species == "TT") %>% 
+	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temperature + 273.15))) %>% 
+	filter(temperature < 32) %>% 
+	# ggplot(aes(x = inverse_temp, y = log(chla))) + geom_point()
+	do(tidy(lm(log(chla) ~ inverse_temp, data = .), conf.int = TRUE)) 
 
 all <- left_join(chla, dec9, by = "uniqueid") %>% 
 	distinct(uniqueid, .keep_all = TRUE) %>% 

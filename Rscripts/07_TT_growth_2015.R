@@ -3,6 +3,7 @@ library(broom)
 library(minpack.lm)
 library(purrr)
 library(stringr)
+library(modelr)
 
 
 
@@ -15,13 +16,16 @@ ggplot(data = TT, aes(x = Hours.since.Innoc, y = Particles.per.ml, group = Tempe
 
 
 TT %>% 
-	# filter(Temperature == 28) %>% 
-ggplot(data = ., aes(x = Hours.since.Innoc, y = Particles.per.ml, color = factor(N.Treatment))) + geom_point() +
-	facet_wrap( ~ Temperature) + geom_line()
+	filter(Temperature == 16, N.Treatment == 5) %>% 
+	mutate(Particles.per.ml = log(Particles.per.ml)) %>% 
+	mutate(day = Hours.since.Innoc/24) %>% 
+ggplot(data = ., aes(x = day, y = Particles.per.ml, color = factor(N.Treatment))) + geom_point() +
+	facet_wrap( ~ Temperature, scales = "free") + geom_line() + geom_abline(slope = 1, intercept = 5)
 
-str(TT)
+log(exp(1))
+
 TT %>% 
-	group_by(Temperature, N.Treatment) %>% 
+	group_by(Temperature, N.Treatment) %>%
 	do(tidy(nls(Particles.per.ml ~ 75 * (1+a)^(Hours.since.Innoc),
 							data= .,  start=list(a=0.01),
 							control = nls.control(maxiter=100, minFactor=1/204800000)))) %>%
@@ -35,6 +39,8 @@ TT_r <- TT %>%
 	do(tidy(nls(Particles.per.ml ~ 75 * (1+a)^(Hours.since.Innoc),
 							data= .,  start=list(a=0.01),
 							control = nls.control(maxiter=100, minFactor=1/204800000)))) 
+
+
 
 write_csv(TT_r, "data-processed/fitted_r_TT_2015_nls.csv")
 
@@ -379,3 +385,11 @@ if(!is.na(schoolfield_nls[1]))
 	T_pk_sch <- c(T_pk_sch, current_dataset$K[j])
 }
 	
+
+
+
+results <- TT %>% 
+	group_by(Temperature, N.Treatment) %>%
+	(nls(Particles.per.ml ~ 75 * (1+a)^(Hours.since.Innoc),
+							data= .,  start=list(a=0.01),
+							control = nls.control(maxiter=100, minFactor=1/204800000))) 
