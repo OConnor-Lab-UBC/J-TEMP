@@ -118,12 +118,14 @@ fits38 <- TT_38 %>%
 
 all_fits <- bind_rows(fits16, fits25, fits32, fits38, fits5, fits8)
 
+
+
 all_fits %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
 	filter(K < 50000) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
-	ggplot(aes(x= inverse_temp, y = log(K))) + geom_point() +
-	scale_x_reverse()
+	ggplot(aes(x= inverse_temp, y = log(K))) + geom_point(size = 2, alpha = 0.5) +
+	scale_x_reverse() + ylab("Ln(K)") + xlab("Inverse temperature (1/kT)")
 
 
 all_fits %>% 
@@ -189,6 +191,24 @@ TT2 <- TT %>%
 	ggsave(time_series_plot, filename = "figures/time_series_facet.pdf", width = 12, height = 10)
 	
 	
+
 	
+	sub1 <- TT2 %>% 
+		filter(temperature == 5, rep == 1)
+	fit_sub1 <- nlsLM(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*time_since_innoc_hours)),
+				data= sub1,  start=list(K = 10000, r = 0.1),
+				lower = c(K = 100, r = 0),
+				upper = c(K = 100000, r = 2),
+				control = nls.control(maxiter=1000, minFactor=1/204800000))
+
 	
+	nb <- nlstools::nlsBoot(fit_sub1)
+	boots <- data.frame(nb$bootCI)
+	colnames(boots) <- c("median", "lower", "upper")
+
+	sub1 %>% 
+		ggplot(aes(x = time_since_innoc_hours, y = cell_density)) + geom_point() +
+		stat_function(fun = function(x) boots$lower[[1]]/(1 + (boots$lower[[1]]/2200 - 1)*exp(-boots$lower[[2]]*x)), color = "grey")+
+		stat_function(fun = function(x) boots$upper[[1]]/(1 + (boots$upper[[1]]/2200 - 1)*exp(-boots$upper[[2]]*x)), color = "grey") +
+		stat_function(fun = function(x) boots$median[[1]]/(1 + (boots$median[[1]]/2200 - 1)*exp(-boots$median[[2]]*x)), color = "cadetblue") 
 	
