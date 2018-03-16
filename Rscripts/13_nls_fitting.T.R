@@ -76,6 +76,8 @@ TT_8 <- TT %>%
 
 TT_16 <- TT %>% 
 	filter(temperature == 16) %>% 
+	filter(cell_density != 36927) %>%
+	filter(cell_density != 33992) %>% ## taking out this outlier for now
 	split(.$rep)
 
 TT_25 <- TT %>% 
@@ -136,4 +138,57 @@ TT %>%
 	ggplot(aes(x = time_since_innoc_hours, y = cell_density, group = rep)) + geom_point() +
 	facet_wrap(~ temperature + rep)
 
+all_fits2 <- all_fits %>% 
+	unite(unique_id, temperature, replicate, remove = FALSE, sep = "_")
 
+reps <- all_fits2 %>% 
+	split(.$unique_id)
+
+
+
+prediction_function <- function(df){
+	pred <- function(x) {
+		y <-   df$K/(1 + (df$K/2200 - 1)*exp(-df$r*x))
+	}
+		x <- seq(0, 1000, by = 1)
+	preds <- sapply(x, pred)
+	results <- data.frame(x, preds)
+	colnames(results) <- c("time", "abundance")
+	return(results)
+	
+}
+
+predictions <- reps %>% 
+	map_df(prediction_function, .id = "unique_id") %>% 
+	separate(unique_id, into = c("temperature", "rep")) %>% 
+	mutate(temperature = factor(temperature, levels = c("5", "8", "16", "25", "32", "38"))) %>% 
+	mutate(part1 = "Temperature = ") %>% 
+	mutate(part2 = "Replicate = ") %>% 
+	unite(Temperature, part1, temperature, remove = FALSE, sep = "") %>% 
+	unite(Rep, part2, rep, remove = FALSE, sep = "") %>% 
+	mutate(Temperature = factor(Temperature, 
+															levels = c("Temperature = 5", "Temperature = 8", "Temperature = 16", "Temperature = 25", "Temperature = 32", "Temperature = 38"))) 
+
+TT2 <- TT %>% 
+	mutate(part1 = "Temperature = ") %>% 
+	mutate(part2 = "Replicate = ") %>% 
+	unite(Temperature, part1, temperature, remove = FALSE, sep = "") %>% 
+	unite(Rep, part2, rep, remove = FALSE, sep = "") %>% 
+	mutate(Temperature = factor(Temperature, 
+															levels = c("Temperature = 5", "Temperature = 8", "Temperature = 16", "Temperature = 25", "Temperature = 32", "Temperature = 38"))) 
+	
+
+	time_series_plot <- TT2 %>% 
+		filter(cell_density != 36927) %>%
+		filter(cell_density != 33992) %>%
+	ggplot(aes(x = time_since_innoc_hours, y = cell_density, group = rep)) + geom_point() +
+	geom_line(aes(x = time, y = abundance, group = rep), data = predictions) +
+	facet_wrap(~ Temperature + Rep) + ylab("Population abundance (cells/ml)") + xlab("Time (hours)") +
+		theme(strip.background = element_rect(colour="white", fill="white")) 
+	
+	ggsave(time_series_plot, filename = "figures/time_series_facet.pdf", width = 12, height = 10)
+	
+	
+	
+	
+	
