@@ -17,7 +17,14 @@ TT <- sea %>%
 
 TT_fit <- TT %>% 
 filter(cell_density != 36927) %>%
-	filter(cell_density != 33992)
+	filter(cell_density != 33992) %>% 
+	filter(cell_density != 9279) %>% 
+	filter(cell_density != 8924) %>% 
+	filter(cell_density != 5045) %>% 
+	distinct(cell_density, cell_volume, days, rep, temperature, .keep_all = TRUE)
+
+TT_fit %>% 
+	filter(temperature == 38) %>% View
 
 logistic <- function(days, r, K){
 	res <- K/(1 + (K/2200 - 1)*exp(-r*days))
@@ -67,12 +74,6 @@ params <- fits %>%
 	unnest(fit %>% map(tidy))
 
 
-params %>% 
-	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
-	filter(estimate < 50000) %>% 
-	mutate(temperature = as.numeric(temperature)) %>% 
-	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
-	facet_wrap( ~ term, scales = "free")
 
 # get confidence intervals
 CI <- fits %>% 
@@ -85,6 +86,40 @@ CI <- fits %>%
 
 # merge parameters and CI estimates
 params <- merge(params, CI, by = intersect(names(params), names(CI)))
+
+
+
+params %>% 
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	# filter(estimate < 50000) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(temperature < 33) %>% 
+	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
+	geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+	facet_wrap( ~ term, scales = "free") 
+
+params %>% 
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	# filter(estimate < 50000) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(temperature < 32) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	filter(term == "K") %>% 
+	ungroup() %>% 
+	lm(log(estimate) ~ inverse_temp, data = .) %>% 
+	tidy(., conf.int = TRUE)
+
+
+params %>% 
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	# filter(estimate < 50000) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(temperature < 32) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	filter(term == "K") %>% 
+	ggplot(aes(x = inverse_temp, y = estimate)) + geom_point() +
+	scale_x_reverse() + geom_smooth(method = "lm")
+
 
 # get predictions
 preds <- fits %>%
@@ -101,17 +136,18 @@ max_min <- group_by(TT_fit, unique_id) %>%
 
 # create new predictions
 preds2 <- fits %>%
-	unnest(fit %>% map(augment, newdata = new_preds)) %>% 
-	merge(., max_min, by = 'curve_id') %>% 
-	group_by(., curve_id) %>%
-	filter(., days > unique(min_days) & days < unique(max_days)) %>%
-	rename(., ln.rate = .fitted) %>%
-	ungroup()
+	unnest(fit %>% map(augment, newdata = new_preds))  
+	# merge(., max_min, by = 'curve_id') %>% 
+	# group_by(., curve_id) %>%
+	# filter(., days > unique(min_days) & days < unique(max_days)) %>%
+	# rename(., ln.rate = .fitted) %>%
+	# ungroup()
 
 
 
 preds2 %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
 	ggplot(aes(x = days, y = .fitted)) + geom_line() +
-	facet_wrap(~ temperature + rep, labeller = labeller(.multi_line = FALSE)) +
+	facet_wrap(~ temperature + rep, labeller = labeller(.multi_line = FALSE), ncol = 5) +
 	geom_point(aes(x = days, y = cell_density), data = TT_fit)
