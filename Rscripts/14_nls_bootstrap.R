@@ -4,6 +4,8 @@ library(broom)
 library(tidyverse)
 library(nls.multstart)
 library(nlstools)
+library(cowplot)
+library(minpack.lm)
 
 sea <- read_csv("data-processed/sea_processed.csv")
 
@@ -31,25 +33,46 @@ logistic <- function(days, r, K){
 	res
 }
 
-sub1 <- TT2 %>% 
+sub1 <- TT_fit %>% 
 	filter(temperature == 5, rep == 1)
 
 
 fit <- nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
 										 data = sub1,
-										 iter = 1000,
+										 iter = 500,
 										 start_lower = c(K = 100, r = 0),
 										 start_upper = c(K = 10000, r = 1),
-										 supp_errors = 'N',
+										 supp_errors = 'Y',
 										 na.action = na.omit,
 										lower = c(K = 100, r = 0),
 											upper = c(K = 100000, r = 2),
 										control = nls.control(maxiter=1000, minFactor=1/204800000))
 
-fit
+str(fit)
+str(fit2)
+
+fit$m[["resid"]]
+nlsJack(fit)
+nlsBoot(fit)
+class(fit)
+confint2(fit)
+
+fit2 <- nlsLM(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+			data= sub1,  start=list(K = 10000, r = 0.1),
+			lower = c(K = 100, r = 0),
+			upper = c(K = 100000, r = 2),
+			control = nls.control(maxiter=1000, minFactor=1/204800000))
+
+class(fit2)
+nlsJack(fit2)$jackCI
+nlsBoot(fit2)$bootCI
+all.equal(fit, fit2)
+nlsBoot
 
 
-fits <- TT_fit %>% 
+fitted(fit)
+
+fits_many <- TT_fit %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
 	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
@@ -63,26 +86,132 @@ fits <- TT_fit %>%
 																								upper = c(K = 50000, r = 2),
 																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
 	
+tt_split <- TT_fit %>% 
+	split(.$unique_id)
+
+tt_split[[1]]
+
+fit_function <- function(df){
+	fit <- nlsLM(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+																 data= df,  start=list(K = 10000, r = 0.1),
+																 lower = c(K = 100, r = 0),
+																 upper = c(K = 100000, r = 2),
+																 control = nls.control(maxiter=1000, minFactor=1/204800000))
+return(fit)
+	}
+
+results <- tt_split %>% 
+	map(fit_function)
 
 
-# get summary info
-info <- fits %>%
+fit2 <- results[[1]]
+
+
+boot_function <- function(x){
+	out <- x[[1]]
+	nb <- nlstools::nlsBoot(x)
+	boots <- data.frame(nb$bootCI)
+	colnames(boots) <- c("median", "lower", "upper")
+	return(boots)
+}
+
+results %>% 
+	map(boot_function)
+
+boot_many <- group_by(TT_fit, unique_id) %>% 
+	# create 200 bootstrap replicates per curve
+	do(., boot = modelr::bootstrap(., n = 100, id = 'boot_num')) %>% 
+	# unnest to show bootstrap number, .id
+	unnest() %>% 
+	# regroup to include the boot_num
+	group_by(., unique_id, boot_num) %>% 
+	# run the model using map()
+	mutate(fit = map(strap, ~ nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+																					data = data.frame(.),
+																					iter = 50,
+																					start_lower = c(K = 100, r = 0),
+																					start_upper = c(K = 10000, r = 1),
+																					supp_errors = 'N',
+																					na.action = na.omit,
+																					lower = c(K = 100, r = 0),
+																					upper = c(K = 50000, r = 2),
+																					control = nls.control(maxiter=1000, minFactor=1/204800000))))
+
+save(boot_many, file =  "boot_many.rdata")
+
+boot_many <- load(file =  "boot_many.rdata")
+
+new_preds <- TT_fit %>%
+	do(., data.frame(days = seq(min(.$days), max(.$days), length.out = 150), stringsAsFactors = FALSE))
+
+# get max and min for each curve
+max_min <- group_by(TT_fit, unique_id) %>%
+	summarise(., min_days = min(days), max_days = max(days)) %>%
+	ungroup()
+
+# create smoother predictions for unbootstrapped models
+preds_many_fits <- fits_many %>%
+	unnest(fit %>% map(augment, newdata = new_preds))
+
+
+str(boot_many$fit[[232]])
+augment(boot_many$fit[[232]], newdata = new_preds) %>% View
+
+boot_many_split <- boot_many %>% 
+	ungroup() %>% 
+	unite(unique_number, unique_id, boot_num, remove = FALSE) %>% 
+	select(fit, unique_number) %>% 
+	split(.$unique_number)
+
+augment(boot_many_split[[1]][1], newdata = new_preds)
+
+boots <- boot_many_split %>%
+	map(augment, fit)
+
+preds_many_boot <- boot_many %>%
+	unnest(fit %>% map(augment, newdata = new_preds)) %>%
+	ungroup() %>%
+	# group by each value of K and get quantiles
+	group_by(., unique_id, days) %>%
+	summarise(lwr_CI = quantile(.fitted, 0.025),
+						upr_CI = quantile(.fitted, 0.975)) %>%
+	ungroup() 
+
+preds_boot <- preds_many_boot %>% 
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature))
+
+	# get summary info
+info <- fits_many %>%
 	unnest(fit %>% map(glance))
 
 # get params
-params <- fits %>%
+params <- fits_many %>%
 	unnest(fit %>% map(tidy))
 
 
 
 # get confidence intervals
-CI <- fits %>% 
+CI <- fits_many %>% 
 	unnest(fit %>% map(~ confint2(.x) %>%
 										 	data.frame() %>%
 										 	rename(., conf.low = X2.5.., conf.high = X97.5..))) %>% 
 	group_by(., unique_id) %>% 
 	mutate(., term = c('K', 'r')) %>%
 	ungroup()
+
+?confint2
+
+
+
+CI2 <- fits_many %>% 
+	unnest(fit %>% map_df(~ boot_function())) 
+
+boot_function(fits_many$fit[[1]])
+	
+bt <- CI2 %>% 
+map_df(boot_function)
+
 
 # merge parameters and CI estimates
 params <- merge(params, CI, by = intersect(names(params), names(CI)))
@@ -117,8 +246,10 @@ params %>%
 	filter(temperature < 32) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	filter(term == "K") %>% 
-	ggplot(aes(x = inverse_temp, y = estimate)) + geom_point() +
-	scale_x_reverse() + geom_smooth(method = "lm")
+	ggplot(aes(x = inverse_temp, y = log(estimate))) +
+	geom_point(size = 2, alpha = 0.5) +
+	geom_point(aes(x = inverse_temp, y = log(K)), data = fits_cool, color = "red") +
+	scale_x_reverse() + geom_smooth(method = "lm", color = "black")
 
 
 # get predictions
@@ -135,7 +266,7 @@ max_min <- group_by(TT_fit, unique_id) %>%
 	ungroup()
 
 # create new predictions
-preds2 <- fits %>%
+preds2 <- fits_many %>%
 	unnest(fit %>% map(augment, newdata = new_preds))  
 	# merge(., max_min, by = 'curve_id') %>% 
 	# group_by(., curve_id) %>%
@@ -145,9 +276,22 @@ preds2 <- fits %>%
 
 
 
-preds2 %>% 
+preds3 <- preds2 %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
-	mutate(temperature = as.numeric(temperature)) %>% 
-	ggplot(aes(x = days, y = .fitted)) + geom_line() +
+	mutate(temperature = as.numeric(temperature))
+
+
+	ggplot(aes(x = days, y = .fitted), data = preds3) + geom_line() + 
 	facet_wrap(~ temperature + rep, labeller = labeller(.multi_line = FALSE), ncol = 5) +
+	geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = preds_boot, alpha = .2)+
 	geom_point(aes(x = days, y = cell_density), data = TT_fit)
+
+
+	ggplot() +
+		# geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = preds_boot, alpha = .2) + 
+		geom_line(aes(x = days, y = .fitted), data = preds3) +
+		facet_wrap(~ temperature + rep, labeller = labeller(.multi_line = FALSE), ncol = 5) +
+		geom_point(aes(x = days, y = cell_density), data = TT_fit)
+	
+	ggsave("figures/growth_trajectories_boot2.pdf", width = 10, height = 8)
+		

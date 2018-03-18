@@ -135,7 +135,8 @@ all_fits %>%
 	filter(temperature < 32) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	ungroup() %>% 
-	lm(log(K) ~ inverse_temp, data = .) %>% summary
+	lm(log(K) ~ inverse_temp, data = .) %>% 
+	tidy(., conf.int = TRUE)
 
 
 k_fit <- function(x) log_fit$estimate[[1]] + log_fit$estimate[[2]]*x
@@ -157,7 +158,6 @@ fits_hot <- all_fits %>%
 	filter(temperature > 31)
 
 
-?geom_ribbon
 
 fits_cool %>% 
 ggplot(aes(x= inverse_temp, y = log(K))) +
@@ -166,7 +166,7 @@ ggplot(aes(x= inverse_temp, y = log(K))) +
 	# stat_function(fun = k_high, color = "red") +
 	# stat_function(fun = k_low, color = "red") +
 	geom_point(size = 2, alpha = 0.5) +
-	geom_point(size = 2, alpha = 0.5, aes(y = log(K), x = inverse_temp), data = fits_hot) +
+	# geom_point(size = 2, alpha = 0.5, aes(y = log(K), x = inverse_temp), data = fits_hot) +
 	scale_x_reverse() + 
 	ylab("Ln(K)") + xlab("Inverse temperature (1/kT)") 
 ggsave("figures/ln_K_all_temps.pdf", width = 6, height = 5)
@@ -225,7 +225,7 @@ TT2 <- TT %>%
 		filter(cell_density != 33992) %>%
 	ggplot(aes(x = days, y = cell_density, group = rep)) + geom_point() +
 	geom_line(aes(x = time, y = abundance, group = rep), data = predictions) +
-	facet_wrap(~ Temperature + Rep) + ylab("Population abundance (cells/ml)") + xlab("Time (days)") +
+	facet_wrap(Temperature ~ Rep, ncol = 5) + ylab("Population abundance (cells/ml)") + xlab("Time (days)") +
 		theme(strip.background = element_rect(colour="white", fill="white")) 
 	
 	ggsave(time_series_plot, filename = "figures/time_series_facet.pdf", width = 12, height = 10)
@@ -243,6 +243,7 @@ TT2 <- TT %>%
 				control = nls.control(maxiter=1000, minFactor=1/204800000))
 summary(fit_sub1)
 coef(fit_sub1)
+str(fit_sub1)
 	
 	nb <- nlstools::nlsBoot(fit_sub1)
 	boots <- data.frame(nb$bootCI)
@@ -265,6 +266,13 @@ coef(fit_sub1)
 	expected<-logistic(sub1$days, coef(fit_sub1)[2], coef(fit_sub1)[1])
 	rsqr<-1-sum((sub1$cell_density-expected)^2)/sum((sub1$cell_density-mean(sub1$cell_density))^2)
 																									
-																									
-																									
+	
+	
+	### write a function to fit the logistic model, then get the bootstrap CIs and then get the R2s
+
+	## step 1 fit model
+	## step 2 calculate Boot CIs
+	## step 3 calculate R2
+	
+	
 	
