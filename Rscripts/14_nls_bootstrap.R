@@ -170,6 +170,16 @@ preds_many_boot <- boot_many %>%
 						upr_CI = quantile(.fitted, 0.975)) %>%
 	ungroup() 
 
+write_csv(preds_many_boot, "data-processed/preds_many_boot.csv")
+
+boots_all <- boot_many %>%
+	unite(uid, unique_id, boot_num, remove = FALSE) %>% 
+	filter(uid %in% preds_id$uid) %>% 
+	unnest(fit %>% map(augment, newdata = new_preds)) %>%
+	ungroup()
+
+write_csv(boots_all, "data-processed/boots_all.csv")
+
 length(unique(preds_many_boot$unique_id))
 
 
@@ -195,13 +205,6 @@ CI <- fits_many %>%
 	group_by(., unique_id) %>% 
 	mutate(., term = c('K', 'r')) %>%
 	ungroup()
-
-
-
-
-
-CI2 <- fits_many %>% 
-	unnest(fit %>% map_df(~ boot_function())) 
 
 
 
@@ -280,5 +283,5 @@ preds3 <- preds2 %>%
 		facet_wrap(~ temperature + rep, labeller = labeller(.multi_line = FALSE), ncol = 5) +
 		geom_point(aes(x = days, y = cell_density), data = TT_fit)
 	
-	ggsave("figures/growth_trajectories_boot2.pdf", width = 10, height = 8)
+	ggsave("figures/growth_trajectories_boot2_withCI.pdf", width = 10, height = 8)
 		
