@@ -42,13 +42,7 @@ rsqr.list<-rep(NA, length(curve.id.list))			#R^2 values for all fits
 for(i in 1:length(curve.id.list)){
 	print(i)
 	
-	# Take a subset of the data corressponding to the ith curve.id.list value
-	dat<-subset(dat.full,dat.full$curve.id==curve.id.list[i])
-											#starting estimates for niche width
-	
-	## This loop fits the model using a range of different starting guesses. We choose the best one using AIC. This helps find good solutions even if there are
-	# convergence problems.
-	# Starting estimates for parameters 'a' and 'b' use a plausible range but with broadly spaced estimates to speed up fitting. 
+	dat<-subset(dat.full,dat.full$curve.id==curve.id.list[1])
 	rvals<-seq(0,2,0.1)		
 	kvals<-seq(100,10000,1000)
 	mod.list<-list()

@@ -4,6 +4,7 @@ library(tidyverse)
 library(minpack.lm)
 library(broom)
 library(cowplot)
+library(stringr)
 
 
 sea <- read_csv("data-processed/sea_processed.csv")
@@ -273,6 +274,152 @@ str(fit_sub1)
 	## step 1 fit model
 	## step 2 calculate Boot CIs
 	## step 3 calculate R2
+
+	
+	res <- nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+											 data = df,
+											 iter = 1000,
+											 start_lower = c(K = 100, r = 0),
+											 start_upper = c(K = 10000, r = 1),
+											 supp_errors = 'N',
+											 na.action = na.omit,
+											 lower = c(K = 100, r = 0),
+											 upper = c(K = 50000, r = 2),
+											 control = nls.control(maxiter=1000, minFactor=1/204800000))
 	
 	
+	fit_growth <- function(data){
+		df <- data
+		res <- nlsLM(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+										 data= df,  start=list(K = 8113.012, r = 0.2252843),
+										 lower = c(K = 10, r = 0),
+										 upper = c(K = 10000, r = 2),
+										 control = nls.control(maxiter=1000, minFactor=1/204800000))
+			out1 <- tidy(res) %>% 
+				select(estimate, term) %>% 
+				spread(key = term, value = estimate)
+			out2 <- glance(res)
+			nb <- nlstools::nlsBoot(res)
+			boots <- nb$bootCI
+			ks <- boots[1,]
+			rs <- boots[2,]
+			bt <- data.frame(ks, rs)
+			bt$lim <- rownames(bt)
+			bt2 <- bt %>% 
+				gather(key = param, value = value, ks, rs) %>%
+				unite(col = limit, lim, param) %>% 
+				mutate(limit = str_replace(limit, "2.5%", "lower")) %>% 
+				mutate(limit = str_replace(limit, "97.5%", "upper")) %>% 
+				spread(key = limit, value = value)
+		
+			expected<-logistic(df$days, coef(res)[2], coef(res)[1])
+			rsqr<-1-sum((df$cell_density-expected)^2)/sum((df$cell_density-mean(df$cell_density))^2)
+			names(rsqr) <- "rsquared"
+			unique_id <- df$unique_id[[1]]
+		all <- cbind(out1, out2, bt2, rsqr, unique_id)
+		return(all)
+		}
+
+	tt_split <- TT_fit %>% 
+		split(.$unique_id)
+	
+	
+	all_output1 <- tt_split %>% 
+		map(fit_growth)
+	
+df <- tt_split[[1]]
+r1 <- fit_growth(df)
+
+df <- tt_split[[2]]
+r2 <- fit_growth(df)
+
+df <- tt_split[[3]]
+r3 <- fit_growth(df)
+
+df <- tt_split[[4]]
+r4 <- fit_growth(df)
+
+df <- tt_split[[5]]
+r5 <- fit_growth(df)
+
+df <- tt_split[[6]]
+r6 <- fit_growth(df)
+
+df <- tt_split[[7]]
+r7 <- fit_growth(df)
+
+df <- tt_split[[8]]
+r8 <- fit_growth(df)
+
+df <- tt_split[[9]]
+r9 <- fit_growth(df)
+
+df <- tt_split[[10]]
+r10 <- fit_growth(df)
+
+df <- tt_split[[11]]
+r11 <- fit_growth(df)
+
+df <- tt_split[[12]] ## weird
+r12 <- fit_growth(df)
+
+df <- tt_split[[13]] ## weird
+r13 <- fit_growth(df)
+
+df <- tt_split[[14]]
+r14 <- fit_growth(df)
+
+df <- tt_split[[15]]
+r15 <- fit_growth(df)
+
+df <- tt_split[[16]]
+r16 <- fit_growth(df)
+
+df <- tt_split[[17]]
+r17 <- fit_growth(df)
+
+df <- tt_split[[18]]
+r18 <- fit_growth(df)
+
+df <- tt_split[[19]]
+r19 <- fit_growth(df)
+
+df <- tt_split[[20]]
+r20 <- fit_growth(df)
+
+df <- tt_split[[21]]
+r21 <- fit_growth(df)
+
+df <- tt_split[[22]]
+r22 <- fit_growth(df)
+
+df <- tt_split[[23]]
+r23 <- fit_growth(df)
+
+df <- tt_split[[24]]
+r24 <- fit_growth(df)
+
+df <- tt_split[[25]]
+r25 <- fit_growth(df)
+
+df <- tt_split[[26]]
+r26 <- fit_growth(df)
+
+df <- tt_split[[27]]
+r27 <- fit_growth(df)
+
+df <- tt_split[[28]]
+r28 <- fit_growth(df)
+
+df <- tt_split[[29]]
+r29 <- fit_growth(df)
+
+df <- tt_split[[30]]
+r30 <- fit_growth(df)
+
+
+all_output <- bind_rows(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10,
+													r11, r12, r13, r14, r15, r16, r17, r18, r19,
+													r20, r21, r22, r23, r24, r25, r26, r27, r28, r29, r30)
+
 	
