@@ -6,6 +6,7 @@ library(nls.multstart)
 library(nlstools)
 library(cowplot)
 library(minpack.lm)
+library(soilphysics)
 
 sea <- read_csv("data-processed/sea_processed.csv")
 
@@ -24,6 +25,8 @@ filter(cell_density != 36927) %>%
 	filter(cell_density != 8924) %>% 
 	filter(cell_density != 5045) %>% 
 	distinct(cell_density, cell_volume, days, rep, temperature, .keep_all = TRUE)
+
+write_csv(TT_fit, "data-processed/TT_fit.csv")
 
 TT_fit %>% 
 	filter(temperature == 38) %>% View
@@ -233,19 +236,33 @@ params %>%
 	lm(log(estimate) ~ inverse_temp, data = .) %>% 
 	tidy(., conf.int = TRUE)
 
+write_csv(params, "data-processed/multstart_params.csv")
+
+p_hot <- params %>% 
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	# filter(estimate < 50000) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(temperature == 32) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	filter(term == "K")
+
+
+p_hot %>% 
+	filter(estimate < 25000) %>% 
+	ggplot(aes(x = temperature, y = estimate)) + geom_point()
 
 params %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
-	# filter(estimate < 50000) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
 	filter(temperature < 32) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	filter(term == "K") %>% 
 	ggplot(aes(x = inverse_temp, y = log(estimate))) +
 	geom_point(size = 2, alpha = 0.5) +
-	geom_point(aes(x = inverse_temp, y = log(K)), data = fits_cool, color = "red") +
-	scale_x_reverse() + geom_smooth(method = "lm", color = "black")
-
+	geom_point(aes(x = inverse_temp, y = log(estimate)), data = p_hot, color = "black", size = 2, alpha = 0.5) +
+	scale_x_reverse() + geom_smooth(method = "lm", color = "black") + ylab("Ln carrying capacity (cells/ml)") +
+	xlab("Temperature (1/kT)")
+ggsave("figures/figure2_supplement_w_32.pdf", width = 4, height = 3.5)
 
 # get predictions
 preds <- fits_many %>%
@@ -255,16 +272,9 @@ preds <- fits_many %>%
 new_preds <- TT_fit %>% 
 	do(., data.frame(days = seq(min(.$days), max(.$days), length.out = 150), stringsAsFactors = FALSE))
 
-# max and min for each curve
-max_min <- group_by(TT_fit, unique_id) %>%
-	summarise(., min_days = min(days), max_days = max(days)) %>%
-	ungroup()
-
 # create new predictions
 preds2 <- fits_many %>%
 	unnest(fit %>% map(augment, newdata = new_preds))  
-
-
 
 preds3 <- preds2 %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
@@ -278,10 +288,12 @@ preds3 <- preds2 %>%
 
 
 	ggplot() +
-		geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = preds_boot, alpha = .2) + 
-		geom_line(aes(x = days, y = .fitted), data = preds3) +
-		facet_wrap(~ temperature + rep, labeller = labeller(.multi_line = FALSE), ncol = 5) +
-		geom_point(aes(x = days, y = cell_density), data = TT_fit)
+		geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
+		geom_line(aes(x = days, y = .fitted), data = filter(preds3, temperature < 33)) +
+		facet_grid(temperature ~ rep, labeller = labeller(.multi_line = FALSE)) +
+		theme(strip.background = element_rect(colour="white", fill="white")) + 
+		theme(text = element_text(size=14, family = "Arial")) +
+		geom_point(aes(x = days, y = cell_density), data = filter(TT_fit, temperature < 33)) + xlab("Time (days)") + ylab("Population abundance (cells/ml)")
 	
-	ggsave("figures/growth_trajectories_boot2_withCI.pdf", width = 10, height = 8)
+	ggsave("figures/growth_trajectories_boot2_withCI_32C.pdf", width = 10, height = 10)
 		

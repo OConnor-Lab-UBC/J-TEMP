@@ -119,7 +119,7 @@ fits38 <- TT_38 %>%
 	mutate(temperature = 38)
 
 all_fits <- bind_rows(fits16, fits25, fits32, fits38, fits5, fits8)
-
+write_csv(all_fits, "data-processed/all_fits.csv")
 
 log_fit <- all_fits %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
@@ -163,11 +163,8 @@ fits_hot <- all_fits %>%
 fits_cool %>% 
 ggplot(aes(x= inverse_temp, y = log(K))) +
 	stat_smooth(method = "lm", color = "black") +
-	# stat_function(fun = k_fit, color = "red") +
-	# stat_function(fun = k_high, color = "red") +
-	# stat_function(fun = k_low, color = "red") +
 	geom_point(size = 2, alpha = 0.5) +
-	# geom_point(size = 2, alpha = 0.5, aes(y = log(K), x = inverse_temp), data = fits_hot) +
+	geom_point(size = 2, alpha = 0.5, aes(y = log(K), x = inverse_temp), data = fits_hot) +
 	scale_x_reverse() + 
 	ylab("Ln(K)") + xlab("Inverse temperature (1/kT)") 
 ggsave("figures/ln_K_all_temps.pdf", width = 6, height = 5)
@@ -423,3 +420,137 @@ all_output <- bind_rows(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10,
 													r20, r21, r22, r23, r24, r25, r26, r27, r28, r29, r30)
 
 	
+
+# get Rsqred from the multstarts ------------------------------------------
+df <- tt_split[[1]]
+fit_growth <- function(data){
+	df <- data
+	res <- nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+								data = df,
+								iter = 500,
+								start_lower = c(K = 100, r = 0),
+								start_upper = c(K = 10000, r = 1),
+								supp_errors = 'Y',
+								na.action = na.omit,
+								lower = c(K = 100, r = 0),
+								upper = c(K = 50000, r = 2),
+								control = nls.control(maxiter=1000, minFactor=1/204800000))
+	
+	expected<-logistic(df$days, coef(res)[2], coef(res)[1])
+	rsqr<-1-sum((df$cell_density-expected)^2)/sum((df$cell_density-mean(df$cell_density))^2)
+	names(rsqr) <- "rsquared"
+	unique_id <- df$unique_id[[1]]
+	all <- cbind(rsqr, unique_id)
+	return(all)
+}
+
+tt_split <- TT_fit %>% 
+	split(.$unique_id)
+
+
+all_output1 <- tt_split %>% 
+	map_df(fit_growth) 
+
+rsqrs <- all_output1 %>% 
+	t(.) %>% 
+	data.frame(.) %>% 
+	rename(rsq = X1,
+				 unique_id = X2)
+
+write_csv(rsqrs, "data-processed/rsqrs.csv")
+
+df <- tt_split[[1]]
+r1 <- fit_growth(df)
+
+df <- tt_split[[2]]
+r2 <- fit_growth(df)
+
+df <- tt_split[[3]]
+r3 <- fit_growth(df)
+
+df <- tt_split[[4]]
+r4 <- fit_growth(df)
+
+df <- tt_split[[5]]
+r5 <- fit_growth(df)
+
+df <- tt_split[[6]]
+r6 <- fit_growth(df)
+
+df <- tt_split[[7]]
+r7 <- fit_growth(df)
+
+df <- tt_split[[8]]
+r8 <- fit_growth(df)
+
+df <- tt_split[[9]]
+r9 <- fit_growth(df)
+
+df <- tt_split[[10]]
+r10 <- fit_growth(df)
+
+df <- tt_split[[11]]
+r11 <- fit_growth(df)
+
+df <- tt_split[[12]] ## weird
+r12 <- fit_growth(df)
+
+df <- tt_split[[13]] ## weird
+r13 <- fit_growth(df)
+
+df <- tt_split[[14]]
+r14 <- fit_growth(df)
+
+df <- tt_split[[15]]
+r15 <- fit_growth(df)
+
+df <- tt_split[[16]]
+r16 <- fit_growth(df)
+
+df <- tt_split[[17]]
+r17 <- fit_growth(df)
+
+df <- tt_split[[18]]
+r18 <- fit_growth(df)
+
+df <- tt_split[[19]]
+r19 <- fit_growth(df)
+
+df <- tt_split[[20]]
+r20 <- fit_growth(df)
+
+df <- tt_split[[21]]
+r21 <- fit_growth(df)
+
+df <- tt_split[[22]]
+r22 <- fit_growth(df)
+
+df <- tt_split[[23]]
+r23 <- fit_growth(df)
+
+df <- tt_split[[24]]
+r24 <- fit_growth(df)
+
+df <- tt_split[[25]]
+r25 <- fit_growth(df)
+
+df <- tt_split[[26]]
+r26 <- fit_growth(df)
+
+df <- tt_split[[27]]
+r27 <- fit_growth(df)
+
+df <- tt_split[[28]]
+r28 <- fit_growth(df)
+
+df <- tt_split[[29]]
+r29 <- fit_growth(df)
+
+df <- tt_split[[30]]
+r30 <- fit_growth(df)
+
+
+all_output <- bind_rows(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10,
+												r11, r12, r13, r14, r15, r16, r17, r18, r19,
+												r20, r21, r22, r23, r24, r25, r26, r27, r28, r29, r30)
+
