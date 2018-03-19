@@ -237,7 +237,7 @@ ggsave("figures/k-temp-prediction-line-with-biovolume.pdf")
 
 x <- seq(278.15, 278.15+20, by = 0.01)
 tsr_pred <- function(x) {
-	y <- 7.5*((1000 + ((-2.27/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
+	y <- 5.1*((1000 + ((-2.27/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
 } 
 
 savage_pred <- function(x) {
@@ -246,10 +246,11 @@ savage_pred <- function(x) {
 
 tsr_predictions <- sapply(x, tsr_pred)
 savage_predictions <- sapply(x, savage_pred)
-pred_df <- data.frame(K_tsr = predictions, K_savage = savage_predictions, temperature_kelvin = x)
+pred_df <- data.frame(K_tsr = tsr_predictions, K_savage = savage_predictions, temperature_kelvin = x)
 
 pred_df2 <- pred_df %>% 
 	mutate(inverse_temp = 1/(8.62 * 10^(-5)*temperature_kelvin))
+
 
 
 	pred_df2 %>% 
@@ -271,7 +272,7 @@ pred_df2 <- pred_df %>%
 		theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 					panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 		theme(text = element_text(size=14, family = "Helvetica")) +
-		scale_x_continuous(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
+		scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
 		theme(plot.title = element_text(hjust = 0.5, size = 14))
 	ggsave("figures/k-temp-prediction-line-with-data-dual-axis.png", width = 6, height = 5)
 
