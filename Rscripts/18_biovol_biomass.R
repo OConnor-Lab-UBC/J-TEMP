@@ -85,7 +85,9 @@ p2 <- params %>%
 
 p2 %>% 
 	filter(temperature < 31) %>% 
-	ggplot(aes(x = temperature, y = log(estimate))) + geom_point()
+	ggplot(aes(x = inverse_temp, y = log(estimate))) + geom_point(size = 2, alpha = 0.5) +
+	geom_smooth(method = "lm", color = "black") + 
+	scale_x_reverse()
 
 p2 %>% 
 	filter(temperature < 31) %>% 
