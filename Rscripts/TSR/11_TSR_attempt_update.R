@@ -211,7 +211,16 @@ ggsave("figures/k-temp-prediction-line-with-data-new-pred.pdf")
 ggsave("figures/k-temp-prediction-line-with-data-new-pred.png", width = 6, height = 5)
 
 
-k_obs_biovolume <- read_csv("data-processed/output_rK_TT.csv")
+k_obs_biovolume <- read_csv("data-processed/output_rK_TT.csv") %>% 
+	mutate(type = "old")
+k_obs_biovolume_ode <- read_csv("data-processed/output_rK_TT_biovolume.csv") %>% 
+	mutate(type = "new")
+
+bind_cols(k_obs_biovolume, k_obs_biovolume_ode) %>% 
+	ggplot(aes(x = K1, y = K)) + geom_point() + 
+	geom_abline(slope = 1, intercept = 0)
+
+
 
 k_obs2_biovolume <- k_obs_biovolume %>% 
 	separate(ID, into = c("temperature", "replicate")) %>%

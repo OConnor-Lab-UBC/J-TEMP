@@ -109,6 +109,7 @@ p2 %>%
 	filter(temperature < 31) %>% 
 	ggplot(aes(x = inverse_temp, y = log(estimate))) + geom_point(size = 2, alpha = 0.5) +
 	geom_smooth(method = "lm", color = "black") + 
+	geom_point(data = k_obs_3_biovolume, aes(x = inverse_temp, y = log(K)), color = "red") +
 	labs(y = expression ("Ln carrying capacity \n(population biovolume)"~um^3/ml)) +
 	# ylab(("Ln carrying capacity \n(population biovolume um" ~ ^3"/ml)")) +
 	xlab("Temperature (1/kT)") +
@@ -119,10 +120,35 @@ p2 %>%
 	filter(temperature < 31) %>% 
 	ungroup() %>% 
 	lm(log(estimate) ~ inverse_temp, data = .) %>% 
-	tidy(., conf.int = TRUE) %>% View
+	tidy(., conf.int = TRUE)
 
+# term  estimate std.error statistic      p.value  conf.low conf.high
+# 1  (Intercept) 4.7646575 0.7436253  6.407336 4.946987e-06 3.2023587 6.3269564
+# 2 inverse_temp 0.2940902 0.0183481 16.028372 4.228887e-12 0.2555422 0.3326381
+
+### result for carrying capacity estimated from trajectories of biovolume. 
 p2 %>% 
 	filter(temperature < 31) %>% 
 	ungroup() %>% 
 	lm(log(estimate) ~ inverse_temp, data = .) %>% summary()
+
+# Call:
+# 	lm(formula = log(estimate) ~ inverse_temp, data = .)
+# 
+# Residuals:
+# 	Min       1Q   Median       3Q      Max 
+# -0.15319 -0.06933  0.01437  0.06063  0.15807 
+# 
+# Coefficients:
+# 	Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)   4.76466    0.74363   6.407 4.95e-06 ***
+# 	inverse_temp  0.29409    0.01835  16.028 4.23e-12 ***
+# 	---
+# 	Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 0.08909 on 18 degrees of freedom
+# Multiple R-squared:  0.9345,	Adjusted R-squared:  0.9309 
+# F-statistic: 256.9 on 1 and 18 DF,  p-value: 4.229e-12
+
+k_obs_3_biovolume
 	
