@@ -55,7 +55,7 @@ all %>%
 	filter(species == "TT") %>% 
 	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temperature + 273.15))) %>% 
 	filter(temperature < 32) %>% 
-	# ggplot(aes(x = inverse_temp, y = log(chla))) + geom_point()
+	# ggplot(aes(x = inverse_temp, y = log(chla))) + geom_point() + scale_x_reverse() + geom_smooth(method = "lm")
 	do(tidy(lm(log(chla) ~ inverse_temp, data = .), conf.int = TRUE)) 
 
 all <- left_join(chla, dec9, by = "uniqueid") %>% 
@@ -102,7 +102,7 @@ all %>%
 
 
 write_csv(all_long, "data-processed/CH_TT_chla_biovolume_final_time.csv")
-
+all_long <- read_csv("data-processed/CH_TT_chla_biovolume_final_time.csv")
 ### How did cell size change over time?
 
 

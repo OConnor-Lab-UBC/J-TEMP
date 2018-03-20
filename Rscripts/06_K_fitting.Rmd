@@ -110,12 +110,12 @@ metabolic_rate_data %>%
 
 Read in time series population dynamics data
 ```{r message=FALSE, warning=FALSE}
-sea <- read_csv("/Users/Joey/Documents/J-TEMP/data-processed/sea_processed.csv")
+sea <- read_csv("/Users/joeybernhardt/Documents/J-TEMP/data-processed/sea_processed.csv")
 	all_cells_TT <-	sea %>%
 		filter(species == "TT") %>% 
 		unite(Unique_ID, temperature, rep, remove = FALSE) %>%  
 		rename(replicate = rep) %>% 
-		rename(P = cell_density,
+		rename(P = total_biovolume,
 					 days = time_since_innoc_days,
 					 ID = Unique_ID) %>% 
 		arrange(ID, days) %>% 
@@ -227,7 +227,7 @@ Parameters <- c(r = 1, K = 10 ^ 7)
 Parameters <- c(r = 1, K = 10 ^ 5)
 # Declare the parameters to be used as the bounds for the fitting algorithm
 LowerBound <- c(r = 0.01, K = 10 ^ 2)
-UpperBound <- c(r = 10, K = 10 ^ 7) 
+UpperBound <- c(r = 10, K = 10 ^ 9) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -244,6 +244,7 @@ output_TT <- TT_split %>%
 	map_df(controlfit)
 
 write_csv(output_TT, "/Users/Joey/Documents/J-TEMP/data-processed/output_rK_TT.csv")
+write_csv(output_TT, "/Users/joeybernhardt/Documents/J-TEMP/data-processed/output_rK_TT_biovolume.csv")
 write_csv(output_TT, "/Users/Joey/Documents/J-TEMP/data-processed/output_rK_TT_cell_abundance.csv")
 
 ## just for now, rename the output_TT as output_TT_abundance

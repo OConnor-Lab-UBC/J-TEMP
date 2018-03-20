@@ -109,10 +109,20 @@ p2 %>%
 	filter(temperature < 31) %>% 
 	ggplot(aes(x = inverse_temp, y = log(estimate))) + geom_point(size = 2, alpha = 0.5) +
 	geom_smooth(method = "lm", color = "black") + 
-	scale_x_reverse()
+	labs(y = expression ("Ln carrying capacity \n(population biovolume)"~um^3/ml)) +
+	# ylab(("Ln carrying capacity \n(population biovolume um" ~ ^3"/ml)")) +
+	xlab("Temperature (1/kT)") +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)")
+ggsave("figures/K_biovolume.pdf", width = 4, height = 3.5)
 
 p2 %>% 
 	filter(temperature < 31) %>% 
 	ungroup() %>% 
 	lm(log(estimate) ~ inverse_temp, data = .) %>% 
 	tidy(., conf.int = TRUE) %>% View
+
+p2 %>% 
+	filter(temperature < 31) %>% 
+	ungroup() %>% 
+	lm(log(estimate) ~ inverse_temp, data = .) %>% summary()
+	

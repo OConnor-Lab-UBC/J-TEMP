@@ -28,6 +28,7 @@ filter(cell_density != 36927) %>%
 
 write_csv(TT_fit, "data-processed/TT_fit.csv")
 
+TT_fit <- read_csv("data-processed/TT_fit.csv")
 TT_fit %>% 
 	filter(temperature == 38) %>% View
 
@@ -224,6 +225,7 @@ params %>%
 	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
 	geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
 	facet_wrap( ~ term, scales = "free") 
+
 
 params %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 

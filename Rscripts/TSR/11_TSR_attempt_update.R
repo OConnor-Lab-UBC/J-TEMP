@@ -122,6 +122,7 @@ ggsave("figures/k-abundance-w-predictions-0.87.png")
 kpred <- read_csv("data-processed/k-tsr-pred.csv")
 
 kpreda <- read_csv("data-processed/k-tsr-pred-isometric.csv")
+
 kpreda <- read_csv("data-processed/k-tsr-pred-isometric-0.87.csv")
 
 
@@ -221,6 +222,9 @@ k_obs_3_biovolume <- k_obs2_biovolume %>%
 	mutate(temperature = as.numeric(temperature)) %>% 
 	filter(temperature < 26) %>% 
 	mutate(inverse_temp = 1/(8.62 * 10^(-5)*temperature_kelvin))
+
+mod_b <- lm(log(K) ~ inverse_temp, data = k_obs_3_biovolume)
+summary(mod_b)
 
 ### now biovolume
 ggplot(aes(x = inverse_temp, y = log(K)), data = k_obs_3_biovolume, size = 4, alpha = 0.5) + geom_point(size = 6, alpha = 0.5)+
