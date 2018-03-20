@@ -30,7 +30,8 @@ tt_mass <- tt %>%
 	mutate(cell_biomass_R = 0.47*(cell_volume)^0.99) %>% 
 	mutate(cell_biomass_M = 0.109 *(cell_volume)^0.991) %>% 
 	mutate(population_biomass_M = cell_biomass_M * cell_density) %>% 
-	mutate(population_biomass_MD = cell_biomass_MD * cell_density)
+	mutate(population_biomass_MD = cell_biomass_MD * cell_density) %>% 
+	mutate(population_biomass_R = cell_biomass_R * cell_density)
 
 
 tt_mass %>% 
@@ -41,11 +42,11 @@ tt_mass %>%
 
 tt_mass %>% 
 	filter(days < 1) %>% 
-	summarise(mean_biomass = mean(cell_biomass_MD)) %>% View
+	summarise(mean_biomass = mean(cell_biomass_R)) %>% View
 
 
 
-425.1173*2200
+294.5306*2200
 fits_many_biomass2 <- tt_mass %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
@@ -60,12 +61,32 @@ fits_many_biomass2 <- tt_mass %>%
 																								upper = c(K = 50000000000, r = 200),
 																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
 
+fits_many_biomassR <- tt_mass %>% 
+	group_by(unique_id) %>% 
+	nest() %>% 
+	mutate(fit = purrr::map(data, ~ nls_multstart(population_biomass_R ~ K/(1 + (K/647967.3 - 1)*exp(-r*days)),
+																								data = .x,
+																								iter = 500,
+																								start_lower = c(K = 100, r = 0),
+																								start_upper = c(K = 100000, r = 1),
+																								supp_errors = 'N',
+																								na.action = na.omit,
+																								lower = c(K = 100, r = 0),
+																								upper = c(K = 50000000000, r = 200),
+																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
+
 # get summary info
 info_biomass2 <- fits_many_biomass2 %>%
 	unnest(fit %>% map(glance))
 
+info_biomassR <- fits_many_biomassR %>%
+	unnest(fit %>% map(glance))
+
 # get params
 params_biomass2 <- fits_many_biomass2 %>%
+	unnest(fit %>% map(tidy))
+
+params_biomassR <- fits_many_biomassR %>%
 	unnest(fit %>% map(tidy))
 
 new_preds <- tt_mass %>%
@@ -74,7 +95,14 @@ new_preds <- tt_mass %>%
 preds_many_fits_biomass2 <- fits_many_biomass2 %>%
 	unnest(fit %>% map(augment, newdata = new_preds))
 
+preds_many_fits_biomassR <- fits_many_biomassR %>%
+	unnest(fit %>% map(augment, newdata = new_preds))
+
 preds3_biomass2 <- preds_many_fits_biomass2 %>% 
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature))
+
+preds3_biomassR <- preds_many_fits_biomassR %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature))
 
@@ -96,6 +124,14 @@ CI_biomass2 <- fits_many_biomass2 %>%
 	mutate(., term = c('K', 'r')) %>%
 	ungroup()
 
+CI_biomassR <- fits_many_biomassR %>% 
+	unnest(fit %>% map(~ confint2(.x) %>%
+										 	data.frame() %>%
+										 	rename(., conf.low = X2.5.., conf.high = X97.5..))) %>% 
+	group_by(., unique_id) %>% 
+	mutate(., term = c('K', 'r')) %>%
+	ungroup()
+
 
 p2_biomass2 <- params_biomass2 %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
@@ -103,8 +139,14 @@ p2_biomass2 <- params_biomass2 %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	filter(term == "K")
 
+p2_biomassR <- params_biomassR %>% 
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	filter(term == "K")
 
-p2_biomass2 %>% 
+
+p2_biomassR %>% 
 	filter(temperature < 31) %>% 
 	ggplot(aes(x = inverse_temp, y = log(estimate))) + geom_point(size = 2, alpha = 0.5) +
 	geom_point(data = filter(p2_biomass, temperature < 31), aes(x = inverse_temp, y = log(estimate))) +
@@ -123,18 +165,19 @@ p2_biomass %>%
 
 p2_biomass$conversion <- "montagnes"
 p2_biomass2$conversion <- "menden"
+p2_biomassR$conversion <- "reynolds"
 
-bind_rows(p2_biomass, p2_biomass2) %>% 
+bind_rows(p2_biomass, p2_biomass2, p2_biomassR) %>% 
 	ggplot(aes(x = inverse_temp, y = log(estimate))) + geom_point(size = 2, alpha = 0.5) +
 	facet_wrap( ~ conversion, scales = "free") + 
 	geom_smooth(method = "lm", color = "black") + 
 	scale_x_reverse()
 	
 
-bind_rows(p2_biomass, p2_biomass2) %>% 
+bind_rows(p2_biomass, p2_biomass2, p2_biomassR) %>% 
 	filter(temperature < 31) %>% 
 	group_by(conversion) %>% 
-	do(tidy(lm(log(estimate) ~ inverse_temp, data = .), conf.int = TRUE)) 
+	do(tidy(lm(log(estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
 # # Groups:   conversion [2]
 # conversion term         estimate std.error statistic  p.value conf.low conf.high
