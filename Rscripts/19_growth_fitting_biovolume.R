@@ -1,4 +1,3 @@
-
 ### dealing with biovolume to biomass conversion
 
 ## cell dry mass = 0.47(volume)^0.99 (Reynolds 2006)
@@ -10,6 +9,8 @@
 ## from Menden Dueer -1.026 + 1.088 (log V) for chlorophytes
 ### 0.358(volume)^1.088 
 
+
+### here the goal is to fit the growth trajectories using biovolume
 
 library(broom)
 library(tidyverse)
@@ -29,7 +30,8 @@ tt_mass <- tt %>%
 	mutate(cell_biomass_MD = 0.3584378*(cell_volume)^1.088) %>% 
 	mutate(cell_biomass_R = 0.47*(cell_volume)^0.99) %>% 
 	mutate(cell_biomass_M = 0.109 *(cell_volume)^0.991) %>% 
-	mutate(population_biomass_M = cell_biomass_M * cell_density)
+	mutate(population_biomass_M = cell_biomass_M * cell_density) %>% 
+	mutate(population_biovolume = cell_volume * cell_density)
 
 
 tt_mass %>% 
@@ -40,15 +42,15 @@ tt_mass %>%
 
 tt_mass %>% 
 	filter(days < 1) %>% 
-	summarise(mean_biomass = mean(cell_biomass_M)) %>% View
+	summarise(mean_biomass = mean(cell_volume)) %>% View
 
 
 
-68.75212*2200
-fits_many_biomass <- tt_mass %>% 
+668.81*2200
+fits_many_biovolume <- tt_mass %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
-	mutate(fit = purrr::map(data, ~ nls_multstart(population_biomass_M ~ K/(1 + (K/151254.7 - 1)*exp(-r*days)),
+	mutate(fit = purrr::map(data, ~ nls_multstart(population_biovolume ~ K/(1 + (K/1471382 - 1)*exp(-r*days)),
 																								data = .x,
 																								iter = 500,
 																								start_lower = c(K = 100, r = 0),
@@ -56,38 +58,38 @@ fits_many_biomass <- tt_mass %>%
 																								supp_errors = 'N',
 																								na.action = na.omit,
 																								lower = c(K = 100, r = 0),
-																								upper = c(K = 500000000, r = 200),
+																								upper = c(K = 5000000000, r = 200),
 																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
 
 # get summary info
-info <- fits_many_biomass %>%
+info_biovolume <- fits_many_biovolume %>%
 	unnest(fit %>% map(glance))
 
 # get params
-params <- fits_many_biomass %>%
+params_biovolume <- fits_many_biovolume %>%
 	unnest(fit %>% map(tidy))
 
-new_preds <- tt_mass %>%
+new_preds_biovolume <- tt_mass %>%
 	do(., data.frame(days = seq(min(.$days), max(.$days), length.out = 150), stringsAsFactors = FALSE))
 
-preds_many_fits <- fits_many_biomass %>%
+preds_many_fit_biovolume <- fits_many_biovolume %>%
 	unnest(fit %>% map(augment, newdata = new_preds))
 
-preds3 <- preds_many_fits %>% 
+preds4 <- preds_many_fit_biovolume %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature))
 
 ggplot() +
 	# geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
-	geom_line(aes(x = days, y = .fitted), data = filter(preds3, temperature < 33)) +
+	geom_line(aes(x = days, y = .fitted), data = filter(preds4, temperature < 33)) +
 	facet_grid(temperature ~ rep, labeller = labeller(.multi_line = FALSE)) +
 	theme(strip.background = element_rect(colour="white", fill="white")) + 
 	theme(text = element_text(size=14, family = "Arial")) +
-	geom_point(aes(x = days, y = population_biomass_M), data = filter(tt_mass, temperature < 33)) + xlab("Time (days)") + ylab("Population biomass (ug C/ml)")
+	geom_point(aes(x = days, y = population_biovolume), data = filter(tt_mass, temperature < 33)) + xlab("Time (days)") + ylab("Population biomass (ug C/ml)")
 
-ggsave("figures/growth_trajectories_biomass_withCI_32C.pdf", width = 10, height = 10)
+ggsave("figures/growth_trajectories_biovolume_withCI_32C.pdf", width = 10, height = 10)
 # get confidence intervals
-CI <- fits_many_biomass %>% 
+CI_biovolume <- fits_many_biovolume %>% 
 	unnest(fit %>% map(~ confint2(.x) %>%
 										 	data.frame() %>%
 										 	rename(., conf.low = X2.5.., conf.high = X97.5..))) %>% 
@@ -96,7 +98,7 @@ CI <- fits_many_biomass %>%
 	ungroup()
 
 
-p2 <- params %>% 
+p2 <- params_biovolume %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
