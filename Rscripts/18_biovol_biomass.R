@@ -171,8 +171,9 @@ bind_rows(p2_biomass, p2_biomass2, p2_biomassR) %>%
 	ggplot(aes(x = inverse_temp, y = log(estimate))) + geom_point(size = 2, alpha = 0.5) +
 	facet_wrap( ~ conversion, scales = "free") + 
 	geom_smooth(method = "lm", color = "black") + 
-	scale_x_reverse()
-	
+	scale_x_reverse() +
+	ylab("Ln K (biomass, ug C)") + xlab("Temperature (1/kT)")
+	ggsave("figures/K_biomass_comparison.pdf", width = 10, height = 5)
 
 bind_rows(p2_biomass, p2_biomass2, p2_biomassR) %>% 
 	filter(temperature < 31) %>% 
