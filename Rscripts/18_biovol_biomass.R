@@ -42,7 +42,7 @@ tt_mass %>%
 
 tt_mass %>% 
 	filter(days < 1) %>% 
-	summarise(mean_biomass = mean(cell_biomass_R)) %>% View
+	summarise(mean_biomass = mean(cell_biomass_M)) %>% View
 
 
 
@@ -74,6 +74,20 @@ fits_many_biomassR <- tt_mass %>%
 																								lower = c(K = 100, r = 0),
 																								upper = c(K = 50000000000, r = 200),
 																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
+68.75212*2200
+fits_many_biomassM <- tt_mass %>% 
+	group_by(unique_id) %>% 
+	nest() %>% 
+	mutate(fit = purrr::map(data, ~ nls_multstart(population_biomass_M ~ K/(1 + (K/151254.7 - 1)*exp(-r*days)),
+																								data = .x,
+																								iter = 500,
+																								start_lower = c(K = 100, r = 0),
+																								start_upper = c(K = 100000, r = 1),
+																								supp_errors = 'N',
+																								na.action = na.omit,
+																								lower = c(K = 100, r = 0),
+																								upper = c(K = 50000000000, r = 200),
+																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
 
 # get summary info
 info_biomass2 <- fits_many_biomass2 %>%
@@ -87,6 +101,9 @@ params_biomass2 <- fits_many_biomass2 %>%
 	unnest(fit %>% map(tidy))
 
 params_biomassR <- fits_many_biomassR %>%
+	unnest(fit %>% map(tidy))
+
+params_biomassM <- fits_many_biomassM %>%
 	unnest(fit %>% map(tidy))
 
 new_preds <- tt_mass %>%
@@ -133,7 +150,7 @@ CI_biomassR <- fits_many_biomassR %>%
 	ungroup()
 
 
-p2_biomass2 <- params_biomass2 %>% 
+p2_biomassM <- params_biomassM %>% ## montagnes
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
@@ -163,11 +180,16 @@ p2_biomass %>%
 # 1  (Intercept) 2.5236749 0.74264964  3.398204 3.20423e-03 0.9634259 4.0839239
 # 2 inverse_temp 0.2931953 0.01832403 16.000593 4.35453e-12 0.2546979 0.3316926
 
-p2_biomass$conversion <- "montagnes"
-p2_biomass2$conversion <- "menden"
+p2_biomassMD <- read_csv("data-processed/logistic_parameters_biomass_menden.csv")
+
+p2_biomassM$conversion <- "montagnes"
+p2_biomassMD$conversion <- "menden"
+p2_biomassMD$rep <- as.character(p2_biomassMD$rep)
 p2_biomassR$conversion <- "reynolds"
 
-bind_rows(p2_biomass, p2_biomass2, p2_biomassR) %>% 
+
+
+bind_rows(p2_biomassM, p2_biomassMD, p2_biomassR) %>% 
 	ggplot(aes(x = inverse_temp, y = log(estimate))) + geom_point(size = 2, alpha = 0.5) +
 	facet_wrap( ~ conversion, scales = "free") + 
 	geom_smooth(method = "lm", color = "black") + 
@@ -250,3 +272,26 @@ p2_biomass2 %>%
 
 write_csv(p2_biomass, "data-processed/logistic_parameters_biomass_montagnes.csv")
 write_csv(p2_biomass2, "data-processed/logistic_parameters_biomass_menden.csv")
+
+
+
+# plots over time ---------------------------------------------------------
+
+new_preds_biomass <- tt_mass %>%
+	do(., data.frame(days = seq(min(.$days), max(.$days), length.out = 150), stringsAsFactors = FALSE))
+
+preds_biomassM <- fits_many_biomassM %>%
+	unnest(fit %>% map(augment, newdata = new_preds_biomass))
+
+preds_biomassM2 <- preds_biomassM %>% 
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature))
+
+ggplot() +
+	# geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
+	geom_line(aes(x = days, y = .fitted), data = filter(preds_biomassM2, temperature < 33)) +
+	facet_grid(temperature ~ rep, labeller = labeller(.multi_line = FALSE)) +
+	theme(strip.background = element_rect(colour="white", fill="white")) + 
+	theme(text = element_text(size=14, family = "Arial")) +
+	geom_point(aes(x = days, y = population_biomass_M), data = filter(tt_mass, temperature < 33)) + xlab("Time (days)") + ylab("Population biomass (ug C/ml)")
+ggsave("figures/growth_trajectories_biomass_32C.pdf", width = 10, height = 10)

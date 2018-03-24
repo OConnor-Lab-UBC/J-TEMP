@@ -55,18 +55,6 @@ sp %>%
 	# filter(unique_id != "25_5") %>% 
 	ggplot(aes(x = nitrate_per_cell, y = estimate)) + geom_point() + geom_smooth(method = "lm", color = "black") 
 
-sp %>% 
-	filter(temp < 33) %>% 
-	filter(type == "cell concentration (per ml)", term == "K") %>% 
-	mutate(nitrate_use = 10 - nitrate) %>% 
-	mutate(nitrate_per_cell = nitrate_use/obs) %>% 
-	mutate(nitrate_remaining_per_cell = nitrate/obs) %>% 
-	ggplot(aes(x = nitrate_remaining_per_cell, y = estimate)) +  geom_smooth(method = "lm", color = "black") +
-	theme(text = element_text(size=14, family = "Arial")) +
-	geom_point(size = 2, alpha = 0.5) +
-	geom_point(size = 2, shape = 1) +
-	ylab("Carrying capacity (cells/ml)") + xlab("Per capita nitrate remaining (uM/cell)")
-ggsave("figures/k-v-nitrate.pdf", width = 5, height = 3.5)
 
 sp %>% 
 	filter(temp < 33) %>% 
@@ -138,14 +126,15 @@ lm(log(chla) ~ inverse_temp, data = .) %>%
 	
 	
 	
-	sp %>% 
+	k_size <- sp %>% 
 		filter(temp < 33) %>% 
 		filter(term == "K", type == 'cell size (um3)') %>% 
-		ggplot(aes(x = obs, y = estimate)) + geom_smooth(method = "lm", color = "black") +
+		mutate(cell_size = 0.109*(obs)^0.991) %>%
+		ggplot(aes(x = cell_size, y = estimate)) + geom_smooth(method = "lm", color = "black") +
 		theme(text = element_text(size=14, family = "Arial")) +
 		geom_point(size = 2, alpha = 0.5) +
 		geom_point(size = 2, shape = 1) +
-		xlab(bquote('Cell biovolume ('*um^3*')')) +
+	xlab("Cell biomass (ug C/cell)") +
 		ylab("Carrying capacity (cells/ml)")
 	ggsave("figures/k-v-cell-biovolume.pdf", width = 5, height = 3.5)
 	
@@ -153,18 +142,67 @@ lm(log(chla) ~ inverse_temp, data = .) %>%
 	
 	sp %>% 
 		filter(temp < 33) %>% 
+		filter(term == "K", type == 'cell size (um3)') %>% 
+		mutate(cell_size = 0.109*(obs)^0.991) %>%
+		lm(estimate ~ cell_size, data = .) %>% summary()
+	
+	k_nitrate <- sp %>% 
+		filter(temp < 33) %>% 
+		filter(type == "cell concentration (per ml)", term == "K") %>% 
+		mutate(nitrate_use = 10 - nitrate) %>% 
+		mutate(nitrate_per_cell = nitrate_use/obs) %>% 
+		mutate(nitrate_remaining_per_cell = nitrate/obs) %>% 
+		ggplot(aes(x = nitrate_remaining_per_cell, y = estimate, color = factor(temp))) +  geom_smooth(method = "lm", color = "black") +
+		theme(text = element_text(size=14, family = "Arial")) +
+		geom_point(size = 2, alpha = 0.5) +
+		geom_point(size = 2, shape = 1) +
+		ylab("Carrying capacity (cells/ml)") + xlab("Per capita nitrate remaining (uM/cell)")
+	ggsave("figures/k-v-nitrate.pdf", width = 5, height = 3.5)
+	
+		
+	sp %>% 
+		filter(temp < 32) %>% 
+		filter(type == "cell concentration (per ml)", term == "K") %>% 
+		mutate(nitrate_use = 10 - nitrate) %>% 
+		mutate(nitrate_per_cell = nitrate_use/obs) %>% 
+		mutate(nitrate_remaining_per_cell = nitrate/obs) %>% 
+		mutate(nitrate_remaining_per_K = nitrate/estimate) %>%
+		ggplot(aes(x = nitrate, y = estimate)) +  geom_smooth(method = "lm", color = "black") +
+		theme(text = element_text(size=14, family = "Arial")) +
+		geom_point(size = 2, alpha = 0.5) +
+		geom_point(size = 2, shape = 1) +
+		ylab("Carrying capacity (cells/ml)") + xlab("Nitrate remaining in mesocosms (uM N)")
+	
+	
+	sp %>% 
+		filter(temp < 33) %>% 
+		filter(type == "cell concentration (per ml)", term == "K") %>% 
+		mutate(nitrate_use = 10 - nitrate) %>% 
+		mutate(nitrate_per_cell = nitrate_use/obs) %>% 
+		mutate(nitrate_remaining_per_cell = nitrate/obs) %>% 
+		lm(estimate ~ nitrate, data =.) %>% summary()
+	
+	
+	plot_nitrate <- sp %>% 
+		filter(temp < 33) %>% 
 		filter(term == "K", type %in% c('cell size (um3)', "cell concentration (per ml)")) %>% 
 		spread(key = type, value = obs) %>%
 		ungroup() %>%
 		rename(cell_size = 'cell size (um3)',
 					 cells = 'cell concentration (per ml)') %>% 
+		mutate(cell_size = 0.109*(cell_size)^0.991) %>% 
 		mutate(nitrate_per_cell = nitrate/cells) %>% 
 		ggplot(aes(x = cell_size, y = nitrate_per_cell)) + geom_smooth(method = "lm", color = "black") +
 		geom_point(size = 2, alpha = 0.5) +
 		geom_point(size = 2, shape = 1) +
-		xlab(bquote('Cell biovolume ('*um^3*')')) + ylab("Nitrate remaining per cell (uM/cell)")
+	xlab("Cell biomass (ug C/cell)") + ylab("Nitrate remaining per cell (uM/cell)")
 	ggsave("figures/nitrate-v-cell-biovolume.pdf", width = 5, height = 3.5)
+
 	
+	figS4 <- plot_grid(k_size, k_nitrate, labels = c("A)", "B)"), label_fontface = "plain", ncol = 2, nrow = 1, label_x = 0, hjust = 0)
+	save_plot("figures/k-temp-figureS4.pdf", figS4, nrow = 1, ncol = 2, base_height = 4, base_width = 5)
+	
+		
 	
 TT_fit <-	read_csv("data-processed/TT_fit.csv")
 library(plotrix)
