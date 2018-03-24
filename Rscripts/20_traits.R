@@ -1,6 +1,6 @@
 
-
-
+library(tidyverse)
+library(cowplot)
 ### linking K to traits.
 
 
@@ -233,3 +233,99 @@ TT_fit %>%
 	top_n(n = 4, wt = days) %>% 
 	summarise(mean_size = mean(cell_volume)) %>% 
 	lm(mean_size ~ temperature, data = .) %>% summary()
+
+
+
+# make figure 3 -----------------------------------------------------------
+
+population_biomass <- sp %>% 
+	mutate(inverse_temp = (1/(.00008617*(temp+273.15)))) %>% 
+	filter(temp < 32) %>% 
+	filter(type == "total biovolume concentration (um3/ml)") %>% 
+	mutate(population_biomass = (0.109*(obs)^0.991)/1000)
+population_biomass %>% 
+	lm(log(population_biomass) ~ inverse_temp, data = .) %>% summary()
+population_biomass %>% 
+	lm(log(population_biomass) ~ inverse_temp, data = .) %>% tidy(., conf.int = TRUE)
+
+cell_size <- sp %>% 
+	mutate(inverse_temp = (1/(.00008617*(temp+273.15)))) %>% 
+	filter(temp < 32) %>% 
+	filter(type == "cell size (um3)") %>% 
+	mutate(cell_biomass = 0.109*(obs)^0.991)
+
+cell_size %>% 
+	lm(cell_biomass ~ inverse_temp, data = .) %>% summary()
+cell_size %>% 
+	lm(cell_biomass ~ inverse_temp, data = .) %>% tidy(., conf.int = TRUE)
+
+cell_biovolume <- sp %>% 
+	mutate(inverse_temp = (1/(.00008617*(temp+273.15)))) %>% 
+	filter(temp < 32) %>% 
+	filter(type == "cell size (um3)") %>% 
+	mutate(cell_biovolume = obs)
+
+
+nitrate <- sp %>% 
+	mutate(inverse_temp = (1/(.00008617*(temp+273.15)))) %>% 
+	filter(temp < 32) %>% 
+	distinct(unique_id, .keep_all = TRUE)
+
+
+nitrate %>% 
+	lm(nitrate ~ inverse_temp, data = .) %>% summary()
+cell_size %>% 
+	lm(cell_biomass ~ inverse_temp, data = .) %>% tidy(., conf.int = TRUE)
+
+
+pop_biomass_plot <- population_biomass %>% 
+	ggplot(aes(x = inverse_temp, y = log(population_biomass))) +
+	geom_smooth(method = "lm", size =1, color = "black") +
+	geom_point(size = 2, alpha = 0.2) + 
+	geom_point(size = 2, shape = 1) + 
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
+	ylab(bquote('Ln population biomass (mg C '*~mL^-1*')')) +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme_bw() +
+	theme(text = element_text(size=12, family = "Arial"),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				panel.background = element_rect(colour = "black", size=0.5),
+				plot.title = element_text(hjust = 0.5, size = 12)) +
+	ggtitle("Temperature (°C)")
+
+nitrate_plot <- nitrate %>% 
+	ggplot(aes(x = inverse_temp, y = nitrate)) +
+	geom_smooth(method = "lm", size =1, color = "black") +
+	geom_point(size = 2, alpha = 0.2) + 
+	geom_point(size = 2, shape = 1) + 
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
+	ylab("Nitrate remaining (uM)") +
+	theme(text = element_text(size=12, family = "Arial")) +
+	theme(panel.border = element_rect(colour = "black", fill=NA, size=0.5)) +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme_bw() +
+	theme(text = element_text(size=12, family = "Arial"),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				panel.background = element_rect(colour = "black", size=0.5),
+				plot.title = element_text(hjust = 0.5, size = 12)) +
+	ggtitle("Temperature (°C)")
+cell_plot <- cell_size %>% 
+	ggplot(aes(x = inverse_temp, y = cell_biomass)) +
+	geom_smooth(method = "lm", size =1, color = "black") +
+	geom_point(size = 2, alpha = 0.2) + 
+	geom_point(size = 2, shape = 1) + 
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
+	ylab(bquote('Cell size (ug C '*~cell^-1*')')) +
+	theme_bw() +
+ggtitle("Temperature (°C)") +
+	theme(text = element_text(size=12, family = "Arial"),
+		panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				panel.background = element_rect(colour = "black", size=0.5),
+		plot.title = element_text(hjust = 0.5, size = 12))
+fig3 <- plot_grid(nitrate_plot, cell_plot, pop_biomass_plot, labels = c("A)", "B)", "C)"), label_fontface = "plain", ncol = 3, nrow = 1, label_x = 0, hjust = 0)
+save_plot("figures/k-temp-figure3.pdf", fig3, nrow = 1, ncol = 3, base_height = 3.3, base_width = 3.5)
+
+
