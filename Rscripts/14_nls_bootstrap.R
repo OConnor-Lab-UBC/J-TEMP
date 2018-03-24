@@ -7,7 +7,8 @@ library(nlstools)
 library(cowplot)
 library(minpack.lm)
 library(soilphysics)
-
+library(extrafont)
+loadfonts()
 sea <- read_csv("data-processed/sea_processed.csv")
 
 TT <- sea %>% 
@@ -67,6 +68,10 @@ nlsBoot
 
 
 fitted(fit)
+
+TT_25 <- TT_fit %>% 
+	filter(temperature == "25") %>% 
+	filter(days < 35)
 
 fits_many <- TT_fit %>% 
 	group_by(unique_id) %>% 
@@ -186,7 +191,7 @@ write_csv(boots_all, "data-processed/boots_all.csv")
 
 length(unique(preds_many_boot$unique_id))
 
-
+preds_many_boot <- read_csv("data-processed/preds_many_boot.csv")
 preds_boot <- preds_many_boot %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature))
@@ -235,11 +240,11 @@ params %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	filter(term == "K") %>% 
 	ungroup() %>% 
-	lm(log(estimate) ~ inverse_temp, data = .) %>% 
+	lm(log(estimate) ~ inverse_temp, data = .) %>% summary()
 	tidy(., conf.int = TRUE)
 
 write_csv(params, "data-processed/multstart_params.csv")
-
+params <- read_csv("data-processed/multstart_params.csv")
 p_hot <- params %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	# filter(estimate < 50000) %>% 
@@ -253,6 +258,8 @@ p_hot %>%
 	filter(estimate < 25000) %>% 
 	ggplot(aes(x = temperature, y = estimate)) + geom_point()
 
+?ggtitle
+
 params %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
@@ -260,12 +267,20 @@ params %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	filter(term == "K") %>% 
 	ggplot(aes(x = inverse_temp, y = log(estimate))) +
+	geom_smooth(method = "lm", color = "black") +
 	geom_point(size = 2, alpha = 0.5) +
-	geom_point(aes(x = inverse_temp, y = log(estimate)), data = p_hot, color = "black", size = 2, alpha = 0.5) +
-	scale_x_reverse() + geom_smooth(method = "lm", color = "black") + ylab("Ln carrying capacity (cells/ml)") +
-	xlab("Temperature (1/kT)")
+	geom_point(size = 2, shape = 1) +
+	# geom_point(aes(x = inverse_temp, y = log(estimate)), data = p_hot, color = "black", size = 2, alpha = 0.5) +
+ ylab("Ln carrying capacity (cells/ml)") +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
+	ggtitle("Temperature (°C)") +
+	theme(text = element_text(size=14, family = "Arial")) +
+	theme(panel.border = element_rect(colour = "black", fill=NA, size=0.5)) +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(), axis.line = element_line(colour = "black"))
 ggsave("figures/figure2_supplement_w_32.pdf", width = 4, height = 3.5)
-
+ggsave("figures/figure2_no_32.pdf", width = 4, height = 3.5)
 # get predictions
 preds <- fits_many %>%
 	unnest(fit %>% map(augment))

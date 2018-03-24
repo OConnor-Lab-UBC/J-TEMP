@@ -54,7 +54,7 @@ ggplot(aes(x = inverse_temp, y = log(estimate)), data = kdata_cool) +
 	geom_smooth(method = "lm", color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed") +
 	theme_bw() + geom_point(size = 4, shape = 1, color = "black") +
 	geom_point(size = 4, alpha = 0.5) +
-	geom_point(data = kdata_hot, aes(x = inverse_temp, y = log(estimate)), size = 4, shape = 1) +
+	# geom_point(data = kdata_hot, aes(x = inverse_temp, y = log(estimate)), size = 4, shape = 1) +
 	xlab("Temperature (1/kT)") + ylab("Ln carrying capacity (cells/mL)") +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
@@ -62,6 +62,7 @@ ggplot(aes(x = inverse_temp, y = log(estimate)), data = kdata_cool) +
 	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
 	theme(plot.title = element_text(hjust = 0.5, size = 14)) 
 ggsave("figures/k-temp-figure2_w32.pdf", width = 5, height = 4)
+ggsave("figures/k-temp-figure2_no_32.pdf", width = 5, height = 4)
 
 
 library(extrafont)

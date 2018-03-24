@@ -112,6 +112,19 @@ nd <- sp %>%
 	mutate(chl_per = chla/cells)
 
 
+nd2 <- sp %>% 
+	# filter(temp < 32) %>% 
+	filter(term == "K", type %in% c('chla concentration (ug/l)', "total biovolume concentration (um3/ml)")) %>% 
+	spread(key = type, value = obs) %>%
+	ungroup() %>%
+	rename(chla = 'chla concentration (ug/l)',
+				 biovol = 'total biovolume concentration (um3/ml)') 
+
+nd2 %>% 
+	ggplot(aes(x = chla, y = biovol, color = factor(temp))) + geom_point() + theme_classic() +
+	ylab("Total population biovolume (um3/ml)") + xlab("Chla (ug/L)")
+
+
 nd %>% 
 	filter(temp < 32) %>% 
 	ggplot(aes(x = inverse_temp, y = log(chla))) + geom_point() +
@@ -120,7 +133,7 @@ nd %>%
 
 nd %>% 
 	filter(temp < 32) %>% 
-lm(log(chla) ~ inverse_temp, data = .) %>% summary()
+lm(log(chla) ~ inverse_temp, data = .) %>% 
 	tidy(., conf.int = TRUE)
 	
 	
@@ -146,5 +159,77 @@ lm(log(chla) ~ inverse_temp, data = .) %>% summary()
 		rename(cell_size = 'cell size (um3)',
 					 cells = 'cell concentration (per ml)') %>% 
 		mutate(nitrate_per_cell = nitrate/cells) %>% 
-		ggplot(aes(x = cell_size, y = nitrate_per_cell)) + geom_point() + geom_smooth(method = "lm")
+		ggplot(aes(x = cell_size, y = nitrate_per_cell)) + geom_smooth(method = "lm", color = "black") +
+		geom_point(size = 2, alpha = 0.5) +
+		geom_point(size = 2, shape = 1) +
+		xlab(bquote('Cell biovolume ('*um^3*')')) + ylab("Nitrate remaining per cell (uM/cell)")
+	ggsave("figures/nitrate-v-cell-biovolume.pdf", width = 5, height = 3.5)
 	
+	
+TT_fit <-	read_csv("data-processed/TT_fit.csv")
+library(plotrix)
+
+TT_fit %>% 
+	filter(days < 13, temperature < 32) %>% 
+	group_by(temperature, rep) %>% 
+	summarise_each(funs(mean, std.error), cell_volume) %>% 
+	# ungroup() %>% 
+	ggplot(aes(x = temperature, y = cell_volume_mean)) + 
+	geom_jitter(width = 0.7, size = 2, alpha = 0.7) + geom_smooth(method = "lm") +
+	ylab(bquote('Cell biovolume ('*um^3*')')) + xlab("Temperature (°C)")
+	
+
+t5 <- TT_fit %>% 
+	filter(days < 13, temperature == 5, days > 11) 
+
+t8 <- TT_fit %>% 
+	filter(temperature == 8) %>% 
+	filter(days < 8, days > 7) 
+
+t16 <- TT_fit %>% 
+	filter(temperature == 16) %>%
+	filter(days < 8, days > 7)
+
+t25 <- TT_fit %>% 
+	filter(temperature == 25) %>% 
+	filter(days < 4, days > 3)
+
+TT_all <- bind_rows(t5, t8, t16, t25) 
+
+TT_all %>% 
+	filter(temperature > 5) %>% 
+	ggplot(aes(x = temperature, y = cell_volume)) + 
+	 geom_smooth(method = "lm", color = "black") +
+	geom_jitter(width = 0.7, size = 2, alpha = 0.7) +
+	ylab(bquote('Cell biovolume ('*um^3*')')) + xlab("Temperature (°C)")
+
+	
+
+TT_all %>% 
+	filter(temperature > 5) %>% 
+	lm(cell_volume ~ temperature, data = .) %>% summary()
+
+sp %>% 
+	filter(temp < 33) %>% 
+	filter(term == "K", type %in% c('cell size (um3)', "cell concentration (per ml)")) %>% 
+	spread(key = type, value = obs) %>%
+	ungroup() %>%
+	rename(cell_size = 'cell size (um3)',
+				 cells = 'cell concentration (per ml)') %>% 
+	lm(cell_size ~ temp, data = .) %>% summary()
+
+
+TT_fit %>% 
+	filter(temperature < 32) %>% 
+group_by(temperature, rep) %>% 
+	top_n(n = 3, wt = days) %>% 
+	summarise(mean_size = mean(cell_volume)) %>% 
+	ggplot(aes(x = temperature, y = mean_size)) + geom_point()
+
+
+TT_fit %>% 
+	filter(temperature < 32) %>% 
+	group_by(temperature, rep) %>% 
+	top_n(n = 4, wt = days) %>% 
+	summarise(mean_size = mean(cell_volume)) %>% 
+	lm(mean_size ~ temperature, data = .) %>% summary()
