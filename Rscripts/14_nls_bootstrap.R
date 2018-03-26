@@ -14,10 +14,31 @@ sea <- read_csv("data-processed/sea_processed2.csv")
 
 TT <- sea %>% 
 	filter(species == "TT") %>% 
+	filter(temperature < 38) %>% 
 	select(temperature, rep, cell_density, cell_volume, time_since_innoc_hours) %>% 
 	mutate(time_since_innoc_hours = ifelse(is.na(time_since_innoc_hours), 12.18056, time_since_innoc_hours)) %>% 
 	mutate(days = time_since_innoc_hours/24) %>% 
 	unite(unique_id, temperature, rep, remove = FALSE, sep = "_")
+
+
+
+TT_fit <- TT %>% 
+	filter(cell_density != 14650) %>% 
+	filter(cell_density != 14438) %>% 
+	filter(cell_density != 13597) %>% 
+	filter(cell_density != 14530) %>% 
+	filter(cell_density != 14164) 
+
+# 
+# 	filter(temperature == 25, rep ==2) %>% 
+# 	filter(days > 20, days < 25) %>% View
+# 	ggplot(aes(x = days, y = cell_density, color = factor(days))) + geom_point(size = 4) +
+# 	facet_wrap( ~ rep)
+	
+
+TT %>% 
+	ggplot(aes(x = days, y = cell_density)) + geom_point() +
+	facet_wrap(temperature ~ rep, ncol = 5)
 
 TT1 <- sea1 %>% 
 	filter(species == "TT") %>% 
@@ -104,6 +125,21 @@ fits_many1 <- TT_fit1 %>%
 																								lower = c(K = 100, r = 0),
 																								upper = c(K = 50000, r = 2),
 																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
+
+fits_many <- TT_fit %>% 
+	group_by(unique_id) %>% 
+	nest() %>% 
+	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+																								data = .x,
+																								iter = 500,
+																								start_lower = c(K = 100, r = 0),
+																								start_upper = c(K = 10000, r = 1),
+																								supp_errors = 'N',
+																								na.action = na.omit,
+																								lower = c(K = 100, r = 0),
+																								upper = c(K = 50000, r = 2),
+																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
+
 	
 tt_split <- TT_fit %>% 
 	split(.$unique_id)

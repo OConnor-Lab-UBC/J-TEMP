@@ -14,6 +14,10 @@ size_data %>%
 	ggplot(aes(x = temperature, y = cell_volume)) + geom_point() +
 	geom_smooth(method = "lm")
 
+
+size_data_all %>% 
+	lm(volume_abd ~ temperature, data = .) %>% summary()
+
 size_data_all %>% 
 	ggplot(aes(x = temperature, y = volume_abd)) + geom_point() +
 	geom_smooth(method = "lm")
@@ -21,6 +25,9 @@ size_data_all %>%
 size_data_all %>% 
 	group_by(temperature, rep) %>% 
 	summarise(mean_size = mean(volume_abd)) %>%
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = mean_size)) + geom_point() +
+	geom_smooth(method = "lm")
 	lm(mean_size ~ temperature, data = .) %>% summary()
 	
 	size_data_all %>% 
@@ -28,4 +35,4 @@ size_data_all %>%
 		ungroup() %>% 
 		summarise(mean_size = mean(volume_abd)) 
 	
-	(-13.347 / 863)*100
+	(-16.241 / 863)*100

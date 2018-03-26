@@ -74,11 +74,11 @@ kdata_hot <- kdata %>%
 
 x <- seq(278.15, 278.15+20, by = 0.01)
 tsr_pred <- function(x) {
-	y <- 4.2*((1000 + ((-1.54/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
+	y <- 4.5*((1000 + ((-1.54/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
 } 
 
 savage_pred <- function(x) {
-	y <- 4*((1000 + ((0/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
+	y <- 4.3*((1000 + ((0/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
 } 
 
 tsr_predictions <- sapply(x, tsr_pred)
@@ -105,7 +105,7 @@ ggplot(aes(x = inverse_temp, y = log(estimate)), data = kdata_cool) +
 	geom_smooth(method = "lm", color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed") +
 	theme_bw() + geom_point(size = 4, shape = 1, color = "black") +
 	geom_point(size = 4, alpha = 0.5) +
-	# geom_point(data = kdata_hot, aes(x = inverse_temp, y = log(estimate)), size = 4, shape = 1) +
+	geom_point(data = kdata_hot, aes(x = inverse_temp, y = log(estimate)), size = 4, shape = 1) +
 	xlab("Temperature (1/kT)") + ylab("Ln carrying capacity (cells/mL)") +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
