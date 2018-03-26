@@ -9,7 +9,8 @@ library(minpack.lm)
 library(soilphysics)
 library(extrafont)
 loadfonts()
-sea <- read_csv("data-processed/sea_processed.csv")
+sea1 <- read_csv("data-processed/sea_processed.csv")
+sea <- read_csv("data-processed/sea_processed2.csv")
 
 TT <- sea %>% 
 	filter(species == "TT") %>% 
@@ -18,8 +19,25 @@ TT <- sea %>%
 	mutate(days = time_since_innoc_hours/24) %>% 
 	unite(unique_id, temperature, rep, remove = FALSE, sep = "_")
 
+TT1 <- sea1 %>% 
+	filter(species == "TT") %>% 
+	select(temperature, rep, cell_density, cell_volume, time_since_innoc_hours) %>% 
+	mutate(time_since_innoc_hours = ifelse(is.na(time_since_innoc_hours), 12.18056, time_since_innoc_hours)) %>% 
+	mutate(days = time_since_innoc_hours/24) %>% 
+	unite(unique_id, temperature, rep, remove = FALSE, sep = "_")
+
+
+TT_fit1 <- TT1 %>% 
+	filter(temperature < 38) %>% 
+	filter(cell_density != 36927) %>%
+	filter(cell_density != 33992) %>% 
+	filter(cell_density != 9279) %>% 
+	filter(cell_density != 8924) %>% 
+	filter(cell_density != 5045) %>% 
+	distinct(cell_density, cell_volume, days, rep, temperature, .keep_all = TRUE)
 
 TT_fit <- TT %>% 
+	filter(temperature < 38) %>% 
 filter(cell_density != 36927) %>%
 	filter(cell_density != 33992) %>% 
 	filter(cell_density != 9279) %>% 
@@ -73,7 +91,7 @@ TT_25 <- TT_fit %>%
 	filter(temperature == "25") %>% 
 	filter(days < 35)
 
-fits_many <- TT_fit %>% 
+fits_many1 <- TT_fit1 %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
 	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
@@ -221,6 +239,7 @@ CI <- fits_many %>%
 params <- merge(params, CI, by = intersect(names(params), names(CI)))
 
 
+write_csv(params, "data-processed/multstart_params_edit.csv")
 
 params %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
@@ -231,8 +250,9 @@ params %>%
 	geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
 	facet_wrap( ~ term, scales = "free") 
 
+params1 <- read_csv("data-processed/multstart_params.csv")
 
-params %>% 
+params1 %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	# filter(estimate < 50000) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
@@ -240,7 +260,9 @@ params %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	filter(term == "K") %>% 
 	ungroup() %>% 
-	lm(log(estimate) ~ inverse_temp, data = .) %>% summary()
+	# ggplot(aes(x = inverse_temp, y = estimate)) + geom_point() + geom_smooth(method = "lm") +
+	# scale_x_reverse()
+	lm(log(estimate) ~ inverse_temp, data = .) %>%
 	tidy(., conf.int = TRUE)
 
 write_csv(params, "data-processed/multstart_params.csv")
@@ -290,10 +312,17 @@ new_preds <- TT_fit %>%
 	do(., data.frame(days = seq(min(.$days), max(.$days), length.out = 150), stringsAsFactors = FALSE))
 
 # create new predictions
+
+preds1 <- fits_many1 %>%
+	unnest(fit %>% map(augment, newdata = new_preds)) 
 preds2 <- fits_many %>%
 	unnest(fit %>% map(augment, newdata = new_preds))  
 
 preds3 <- preds2 %>% 
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature))
+
+preds1b <- preds1 %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature))
 
@@ -305,12 +334,15 @@ preds3 <- preds2 %>%
 
 
 	ggplot() +
-		geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
+		# geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
 		geom_line(aes(x = days, y = .fitted), data = filter(preds3, temperature < 33)) +
+		# geom_line(aes(x = days, y = .fitted), data = filter(preds1b, temperature < 33), color = "red") +
 		facet_grid(temperature ~ rep, labeller = labeller(.multi_line = FALSE)) +
 		theme(strip.background = element_rect(colour="white", fill="white")) + 
 		theme(text = element_text(size=14, family = "Arial")) +
-		geom_point(aes(x = days, y = cell_density), data = filter(TT_fit, temperature < 33)) + xlab("Time (days)") + ylab("Population abundance (cells/ml)")
-	
+		# geom_point(aes(x = days, y = cell_density), data = filter(TT_fit1, temperature < 33), color = "red") +
+		geom_point(aes(x = days, y = cell_density), data = filter(TT_fit, temperature < 33)) +
+		xlab("Time (days)") + ylab("Population abundance (cells/ml)")
+	ggsave("figures/growth_trajectories_boot2_withCI_32C_old_new.pdf", width = 10, height = 10)	
 	ggsave("figures/growth_trajectories_boot2_withCI_32C.pdf", width = 10, height = 10)
 		

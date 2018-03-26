@@ -1,4 +1,5 @@
-sea <- read_csv("data-processed/sea_processed.csv")
+sea <- read_csv("data-processed/sea_processed2.csv")
+library(cowplot)
 
 TT <- sea %>% 
 	filter(species == "TT") %>% 
@@ -16,6 +17,10 @@ TT_fit <- TT %>%
 	filter(cell_density != 5045) %>% 
 	distinct(cell_density, cell_volume, days, rep, temperature, .keep_all = TRUE)
 
+
+TT_fit %>% 
+	ggplot(aes(x = time_since_innoc_hours, y = cell_density)) + geom_point() +
+	facet_wrap(temperature ~ rep, ncol = 5, scales = "free")
 
 
 
