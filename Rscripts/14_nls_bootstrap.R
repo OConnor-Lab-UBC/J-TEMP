@@ -379,6 +379,7 @@ preds1b <- preds1 %>%
 		# geom_point(aes(x = days, y = cell_density), data = filter(TT_fit1, temperature < 33), color = "red") +
 		geom_point(aes(x = days, y = cell_density), data = filter(TT_fit, temperature < 33)) +
 		xlab("Time (days)") + ylab("Population abundance (cells/ml)")
+	ggsave("figures/growth_trajectories_boot2_withCI_32C_new.pdf", width = 10, height = 10)	
 	ggsave("figures/growth_trajectories_boot2_withCI_32C_old_new.pdf", width = 10, height = 10)	
 	ggsave("figures/growth_trajectories_boot2_withCI_32C.pdf", width = 10, height = 10)
 		
