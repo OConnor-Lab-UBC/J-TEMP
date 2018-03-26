@@ -20,8 +20,8 @@ sea <- sea_raw %>%
 	filter(cell_volume != 528.400) %>% 
 	filter(cell_volume != 581.380) %>% 
 	filter(cell_volume != 703.270) %>% 
-	filter(cell_volume != 398.070) %>% 
-	filter(cell_density > 2100) ## get rid of potentially erroneous measurement points that are really low
+	filter(cell_volume != 398.070) 
+	# filter(cell_density > 2100) ## get rid of potentially erroneous measurement points that are really low
 
 
 write_csv(sea, "data-processed/sea_processed.csv")

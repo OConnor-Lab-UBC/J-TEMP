@@ -115,10 +115,6 @@ innoc_densities <- read_csv("data-processed/jtemp_innoc_densities.csv")
 
 sea_raw2 <- bind_rows(sea_raw, innoc_densities)
 
-
-
-unique(sea_raw$temperature)
-
 sea <- sea_raw2 %>% 
 	filter(temperature != "18") %>% 
 	mutate(temperature = str_replace(temperature, "24", "25")) %>% 

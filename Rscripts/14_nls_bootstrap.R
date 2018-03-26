@@ -129,7 +129,7 @@ fits_many1 <- TT_fit1 %>%
 fits_many <- TT_fit %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
-	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/1000 - 1)*exp(-r*days)),
 																								data = .x,
 																								iter = 500,
 																								start_lower = c(K = 100, r = 0),
@@ -288,7 +288,7 @@ params %>%
 
 params1 <- read_csv("data-processed/multstart_params.csv")
 
-params1 %>% 
+params %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	# filter(estimate < 50000) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
