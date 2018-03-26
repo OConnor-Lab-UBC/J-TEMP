@@ -45,13 +45,16 @@ cell_files <- c(list.files("data-raw/flowcam-summaries-nov10", full.names = TRUE
 								list.files("data-raw/flowcam-summaries-jan11", full.names = TRUE))
 
 cell_files[1]
-names(cell_files) <- cell_files %>% 
+
+cell_files2 <- list.files(path="/Users/joeybernhardt/Desktop/k-temp-edited/", pattern="*.csv", recursive = TRUE)
+
+names(cell_files2) <- cell_files2 %>% 
 	gsub(pattern = ".csv$", replacement = "")
 
 
 #### Step 3: read in all the files!
 
-all_cells <- map_df(cell_files, read_csv, col_names = FALSE, .id = "file_name")
+all_cells2 <- map_df(cell_files2, read_csv, col_names = FALSE, .id = "file_name")
 
 
 

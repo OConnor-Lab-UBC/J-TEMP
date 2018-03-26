@@ -181,21 +181,47 @@ p2_biomass %>%
 # 2 inverse_temp 0.2931953 0.01832403 16.000593 4.35453e-12 0.2546979 0.3316926
 
 p2_biomassMD <- read_csv("data-processed/logistic_parameters_biomass_menden.csv")
+p2_biomassM <- read_csv("data-processed/logistic_parameters_biomass_montagnes.csv")
+write_csv(p2_biomass2, "data-processed/logistic_parameters_biomass_menden.csv")
 
-p2_biomassM$conversion <- "montagnes"
-p2_biomassMD$conversion <- "menden"
+
+p2_biomassM$conversion <- "Montagnes"
+p2_biomassM$rep <- as.character(p2_biomassM$rep)
+p2_biomassMD$conversion <- "Menden-Deuer"
 p2_biomassMD$rep <- as.character(p2_biomassMD$rep)
-p2_biomassR$conversion <- "reynolds"
+p2_biomassR$conversion <- "Reynolds"
 
 
+
+p2_biomassM %>% 
+	filter(temperature < 32) %>% 
+	lm(log(estimate) ~ inverse_temp, data =.) %>% summary()
+
+p2_biomassMD %>% 
+	filter(temperature < 32) %>% 
+	lm(log(estimate) ~ inverse_temp, data =.) %>% summary()
+
+p2_biomassR %>% 
+	filter(temperature < 32) %>% 
+	lm(log(estimate) ~ inverse_temp, data =.) %>% summary()
 
 bind_rows(p2_biomassM, p2_biomassMD, p2_biomassR) %>% 
+	filter(temperature < 32) %>% 
 	ggplot(aes(x = inverse_temp, y = log(estimate))) + geom_point(size = 2, alpha = 0.5) +
 	facet_wrap( ~ conversion, scales = "free") + 
 	geom_smooth(method = "lm", color = "black") + 
 	scale_x_reverse() +
-	ylab("Ln K (biomass, ug C)") + xlab("Temperature (1/kT)")
-	ggsave("figures/K_biomass_comparison.pdf", width = 10, height = 5)
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
+	ylab(bquote('Ln carrying capacity (ug C '*~mL^-1*')')) +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme_bw() +
+	theme(text = element_text(size=12, family = "Arial"),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				panel.background = element_rect(colour = "black", size=0.5),
+				plot.title = element_text(hjust = 0.5, size = 12)) +
+	ggtitle("Temperature (°C)")
+		ggsave("figures/K_biomass_comparison.pdf", width = 10, height = 4)
 
 bind_rows(p2_biomass, p2_biomass2, p2_biomassR) %>% 
 	filter(temperature < 31) %>% 

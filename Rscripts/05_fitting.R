@@ -11,7 +11,7 @@ library(broom)
 
 jtemp <- read_csv("data-processed/Jtemp_all.csv")
 sea_raw <- read_csv("data-processed/sea.csv")
-
+sea_raw <- read_csv("data-processed/sea2.csv")
 sea <- sea_raw %>% 
 	mutate(total_biovolume = ifelse(is.na(total_biovolume), cell_density*cell_volume, total_biovolume)) %>% 
 	filter(cell_volume != 1776.750) %>% 
@@ -25,6 +25,8 @@ sea <- sea_raw %>%
 
 
 write_csv(sea, "data-processed/sea_processed.csv")
+write_csv(sea, "data-processed/sea_processed2.csv")
+
 	
 sea %>% 
 	filter(species == "CH", temperature == 38) %>% View

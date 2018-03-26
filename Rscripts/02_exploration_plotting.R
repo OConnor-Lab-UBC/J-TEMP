@@ -107,8 +107,10 @@ jtemp %>%
 
 
 # bring in the seawater species -------------------------------------------
-
+library(tidyverse)
+library(stringr)
 sea_raw <- read_csv("data-processed/YangelJtemp_all.csv")
+sea_raw <- read_csv("data-processed/k-temp-processed.csv")
 innoc_densities <- read_csv("data-processed/jtemp_innoc_densities.csv")
 
 sea_raw2 <- bind_rows(sea_raw, innoc_densities)
@@ -127,7 +129,7 @@ sea <- sea_raw2 %>%
 
 
 sea$cell_density[sea$time_since_innoc_days < 1] <- 2200 ## just setting all the innoculation densities to the same value
-
+write_csv(sea, "data-processed/sea2.csv")
 
 sea %>%
 	filter(temperature != "18") %>% 
