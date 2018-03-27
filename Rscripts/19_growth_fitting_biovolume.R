@@ -22,7 +22,7 @@ library(extrafont)
 loadfonts()
 
 
-tt <- read_csv("data-processed/TT_fit2.csv")
+tt <- read_csv("data-processed/TT_fit_edit.csv")
 
 
 ### now convert to biomass
@@ -46,11 +46,11 @@ tt_mass %>%
 
 
 
-673.81*1000
+676.81*1000
 fits_many_biovolume <- tt_mass %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
-	mutate(fit = purrr::map(data, ~ nls_multstart(population_biovolume ~ K/(1 + (K/673810 - 1)*exp(-r*days)),
+	mutate(fit = purrr::map(data, ~ nls_multstart(population_biovolume ~ K/(1 + (K/676810 - 1)*exp(-r*days)),
 																								data = .x,
 																								iter = 500,
 																								start_lower = c(K = 100, r = 0),
@@ -104,16 +104,18 @@ p2 <- params_biovolume %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	filter(term == "K")
 
+write_csv(p2, "data-processed/K-estimates-biomass-edit.csv")
 
 p2 %>% 
 	filter(temperature < 31) %>% 
-	ggplot(aes(x = inverse_temp, y = log(estimate))) + geom_point(size = 2, alpha = 0.5) +
+	ggplot(aes(x = inverse_temp, y = log(estimate))) +
 	geom_smooth(method = "lm", color = "black") + 
-	geom_point(data = k_obs_3_biovolume, aes(x = inverse_temp, y = log(K)), color = "red") +
+	geom_point(size = 2, alpha = 0.5) +
+	geom_point(size = 2, shape = 1) +
 	labs(y = expression ("Ln carrying capacity \n(population biovolume)"~um^3/ml)) +
 	# ylab(("Ln carrying capacity \n(population biovolume um" ~ ^3"/ml)")) +
 	xlab("Temperature (1/kT)") +
-	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)")
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") 
 ggsave("figures/K_biovolume.pdf", width = 4, height = 3.5)
 
 p2 %>% 

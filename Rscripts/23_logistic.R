@@ -13,7 +13,7 @@ TT_fit <- sea %>%
 	mutate(days = time_since_innoc_hours/24) %>% 
 	unite(unique_id, temperature, rep, remove = FALSE, sep = "_")
 
-
+write_csv(TT_fit, "data-processed/TT_fit_edit.csv")
 
 fits_many <- TT_fit %>% 
 	group_by(unique_id) %>% 
