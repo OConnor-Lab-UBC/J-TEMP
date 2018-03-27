@@ -12,14 +12,38 @@ loadfonts()
 sea1 <- read_csv("data-processed/sea_processed.csv")
 sea <- read_csv("data-processed/sea_processed2.csv")
 
-TT <- sea %>% 
+TT_fit <- sea %>% 
 	filter(species == "TT") %>% 
 	filter(temperature < 38) %>% 
-	select(temperature, rep, cell_density, cell_volume, time_since_innoc_hours) %>% 
+	mutate(cell_density = ifelse(cell_density == 2200, 1000, cell_density)) %>% 
+	filter(cell_density != 19767, cell_density != 30185, cell_density != 23949, cell_density != 5638, cell_density != 6505,
+				 cell_density != 14164, cell_density != 13597, cell_density != 14438, cell_density != 14650,
+				 cell_density != 15049,cell_density != 14530) %>% 
+	select(temperature, rep, cell_density, cell_volume, time_since_innoc_hours, start_time) %>% 
 	mutate(time_since_innoc_hours = ifelse(is.na(time_since_innoc_hours), 12.18056, time_since_innoc_hours)) %>% 
 	mutate(days = time_since_innoc_hours/24) %>% 
 	unite(unique_id, temperature, rep, remove = FALSE, sep = "_")
 
+
+
+TT_fit %>% 
+	filter(temperature == 25, rep == 4) %>% View
+	ggplot(aes(x = start_time, y = cell_density)) + geom_point() +
+	facet_wrap( ~ rep) +
+	theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+TT %>% 
+	filter(temperature < 32, cell_volume < 2000, days > 34, days < 36) %>% 
+	ggplot(aes(x = temperature, y = cell_volume)) + geom_point() +
+	facet_wrap( ~ temperature)
+
+TT %>% 
+	filter(temperature < 32, cell_volume < 2000, days > 34, days < 35) %>%
+	lm(cell_volume ~ temperature, data = .) %>% summary()
+
+TT %>% 
+	ggplot(aes(x = days, y = cell_density)) + geom_point() + 
+	facet_wrap(temperature ~ rep, ncol =5)
 
 
 TT_fit <- TT %>% 
@@ -67,6 +91,7 @@ filter(cell_density != 36927) %>%
 	distinct(cell_density, cell_volume, days, rep, temperature, .keep_all = TRUE)
 
 write_csv(TT_fit, "data-processed/TT_fit.csv")
+write_csv(TT_fit, "data-processed/TT_fit2.csv")
 
 TT_fit <- read_csv("data-processed/TT_fit.csv")
 TT_fit %>% 
@@ -81,17 +106,17 @@ sub1 <- TT_fit %>%
 	filter(temperature == 5, rep == 1)
 
 
-fit <- nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+fit <- nls_multstart(cell_density ~ K/(1 + (K/NO - 1)*exp(-r*days)),
 										 data = sub1,
 										 iter = 500,
-										 start_lower = c(K = 100, r = 0),
-										 start_upper = c(K = 10000, r = 1),
+										 start_lower = c(K = 100, r = 0, NO = 10),
+										 start_upper = c(K = 10000, r = 1, NO = 2000),
 										 supp_errors = 'Y',
 										 na.action = na.omit,
-										lower = c(K = 100, r = 0),
-											upper = c(K = 100000, r = 2),
-										control = nls.control(maxiter=1000, minFactor=1/204800000))
-
+										 lower = c(K = 100, r = 0, NO = 10),
+										 upper = c(K = 50000, r = 2, NO = 2500),
+										 control = nls.control(maxiter=1000, minFactor=1/204800000))
+summary(fit)
 
 fit2 <- nlsLM(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
 			data= sub1,  start=list(K = 10000, r = 0.1),
@@ -111,6 +136,10 @@ fitted(fit)
 TT_25 <- TT_fit %>% 
 	filter(temperature == "25") %>% 
 	filter(days < 35)
+
+
+
+
 
 fits_many1 <- TT_fit1 %>% 
 	group_by(unique_id) %>% 
@@ -298,7 +327,7 @@ params %>%
 	ungroup() %>% 
 	# ggplot(aes(x = inverse_temp, y = estimate)) + geom_point() + geom_smooth(method = "lm") +
 	# scale_x_reverse()
-	lm(log(estimate) ~ inverse_temp, data = .) %>%
+	lm(log(estimate) ~ inverse_temp, data = .) %>% summary
 	tidy(., conf.int = TRUE)
 
 write_csv(params, "data-processed/multstart_params.csv")

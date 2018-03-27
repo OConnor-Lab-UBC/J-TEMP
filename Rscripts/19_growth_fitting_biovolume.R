@@ -22,7 +22,7 @@ library(extrafont)
 loadfonts()
 
 
-tt <- read_csv("data-processed/TT_fit.csv")
+tt <- read_csv("data-processed/TT_fit2.csv")
 
 
 ### now convert to biomass
@@ -46,11 +46,11 @@ tt_mass %>%
 
 
 
-668.81*2200
+673.81*1000
 fits_many_biovolume <- tt_mass %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
-	mutate(fit = purrr::map(data, ~ nls_multstart(population_biovolume ~ K/(1 + (K/1471382 - 1)*exp(-r*days)),
+	mutate(fit = purrr::map(data, ~ nls_multstart(population_biovolume ~ K/(1 + (K/673810 - 1)*exp(-r*days)),
 																								data = .x,
 																								iter = 500,
 																								start_lower = c(K = 100, r = 0),
@@ -131,6 +131,12 @@ p2 %>%
 	filter(temperature < 31) %>% 
 	ungroup() %>% 
 	lm(log(estimate) ~ inverse_temp, data = .) %>% summary()
+
+p2 %>% 
+	filter(temperature < 31) %>% 
+	ungroup() %>% 
+	ggplot(aes(x = inverse_temp, y = estimate)) + geom_point() +
+	scale_x_reverse() + geom_smooth(method = "lm")
 
 # Call:
 # 	lm(formula = log(estimate) ~ inverse_temp, data = .)

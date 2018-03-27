@@ -423,9 +423,15 @@ all_output <- bind_rows(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10,
 
 # get Rsqred from the multstarts ------------------------------------------
 df <- tt_split[[1]]
+logistic <- function(days, r, K){
+	res <- K/(1 + (K/2200 - 1)*exp(-r*days))
+	res
+}
+
+
 fit_growth <- function(data){
 	df <- data
-	res <- nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+	res <- nls_multstart(cell_density ~ K/(1 + (K/2000 - 1)*exp(-r*days)),
 								data = df,
 								iter = 500,
 								start_lower = c(K = 100, r = 0),
