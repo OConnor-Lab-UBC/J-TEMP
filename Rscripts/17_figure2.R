@@ -10,6 +10,13 @@ kdata <- read_csv("data-processed/multstart_params_edit.csv") %>%
 	filter(term == "K") %>% 
 	mutate(set = "new")
 
+kdata <- params %>% 
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	filter(term == "K") %>% 
+	mutate(set = "new")
+
 kdata1 <- read_csv("data-processed/multstart_params.csv") %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
@@ -38,21 +45,6 @@ all_k %>%
 kdata_cool <- kdata %>% 
 	filter(temperature < 32)
 
-sea <- read_csv("data-processed/sea_processed2.csv")
-
-
-sea %>% 
-	filter(temperature == 5) %>% 
-	filter(time_since_innoc_days > 30) %>% 
-	summarise(mean_size = mean(cell_volume))
-
-
-sea %>% 
-	filter(temperature < 32) %>% 
-	filter(time_since_innoc_days > 30) %>% 
-	group_by(rep, temperature) %>% 
-	summarise(mean_size = mean(cell_volume)) %>% 
-	lm(mean_size ~ temperature, data = .) %>% summary()
 
 
 (-15.964/1173)*100
@@ -74,11 +66,11 @@ kdata_hot <- kdata %>%
 
 	x <- seq(278.15, 278.15+20, by = 0.01)
 	tsr_pred <- function(x) {
-		y <- 4.25*((1000 + ((-1.83/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
+		y <- 4.35*((1000 + ((-1.83/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
 	} 
 	
 	savage_pred <- function(x) {
-		y <- 4.25*((1000 + ((0/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
+		y <- 4.35*((1000 + ((0/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
 	} 
 	
 	tsr_predictions <- sapply(x, tsr_pred)
@@ -93,6 +85,10 @@ kdata_hot <- kdata %>%
 		lm(log(K_tsr) ~ inverse_temp, data = .) %>% 
 		tidy(., conf.int = TRUE)
 	
+	kdata %>% 
+		filter(temperature < 32) %>% 
+		lm(log(estimate) ~ inverse_temp, data = .) %>% 
+		tidy(., conf.int = TRUE)
 	
 	pred_df2 %>% 
 		lm(log(K_savage) ~ inverse_temp, data = .) %>% 

@@ -2,7 +2,9 @@
 TT_fit <- sea %>% 
 	filter(species == "TT") %>% 
 	filter(temperature < 38) %>% 
-	mutate(cell_density = ifelse(cell_density == 2200, 1000, cell_density)) %>% 
+	mutate(cell_density = ifelse(cell_density < 2000, 2500, cell_density)) %>% 
+	mutate(cell_density = ifelse(cell_density == 2200, 1500, cell_density)) %>% 
+	# mutate(cell_density = ifelse(cell_density == 2200 & temperature == 5, 500, cell_density)) %>% 
 	filter(cell_density != 19767, cell_density != 30185, cell_density != 23949, cell_density != 5638, cell_density != 6505,
 				 cell_density != 14164, cell_density != 13597, cell_density != 14438, cell_density != 14650,
 				 cell_density != 15049,cell_density != 14530) %>% 
@@ -16,11 +18,11 @@ TT_fit <- sea %>%
 fits_many <- TT_fit %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
-	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/1000 - 1)*exp(-r*days)),
+	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/1500 - 1)*exp(-r*days)),
 																								data = .x,
 																								iter = 500,
 																								start_lower = c(K = 100, r = 0),
-																								start_upper = c(K = 10000, r = 1),
+																								start_upper = c(K = 100000, r = 1),
 																								supp_errors = 'N',
 																								na.action = na.omit,
 																								lower = c(K = 100, r = 0),
@@ -69,7 +71,7 @@ params %>%
 	ungroup() %>% 
 	# ggplot(aes(x = inverse_temp, y = estimate)) + geom_point() + geom_smooth(method = "lm") +
 	# scale_x_reverse()
-	lm(log(estimate) ~ inverse_temp, data = .) %>% summary
+	lm(log(estimate) ~ inverse_temp, data = .) %>% 
 tidy(., conf.int = TRUE)
 
 params %>% 
@@ -91,7 +93,7 @@ params %>%
 	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black"))
-
+ggsave("figures/figure2_no_32_edit.pdf", width = 4, height = 3.5)
 
 
 preds2 <- fits_many %>%
@@ -115,20 +117,10 @@ ggplot() +
 ggsave("figures/growth_trajectories_boot2_withCI_32C_new.pdf", width = 10, height = 10)	
 
 
-ggplot() +
-	# geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
-	geom_line(aes(x = days, y = .fitted), data = filter(preds3, temperature > 31)) +
-	# geom_line(aes(x = days, y = .fitted), data = filter(preds1b, temperature < 33), color = "red") +
-	facet_grid(temperature ~ rep, labeller = labeller(.multi_line = FALSE)) +
-	theme(strip.background = element_rect(colour="white", fill="white")) + 
-	theme(text = element_text(size=14, family = "Arial")) +
-	# geom_point(aes(x = days, y = cell_density), data = filter(TT_fit1, temperature < 33), color = "red") +
-	geom_point(aes(x = days, y = cell_density), data = filter(TT_fit, temperature >31)) +
-	xlab("Time (days)") + ylab("Population abundance (cells/ml)")
 
 fit_growth <- function(data){
 	df <- data
-	res <- nls_multstart(cell_density ~ K/(1 + (K/1000 - 1)*exp(-r*days)),
+	res <- nls_multstart(cell_density ~ K/(1 + (K/1500 - 1)*exp(-r*days)),
 											 data = df,
 											 iter = 500,
 											 start_lower = c(K = 100, r = 0),
@@ -148,6 +140,7 @@ fit_growth <- function(data){
 }
 
 tt_split <- TT_fit %>% 
+	# filter(temperature < 32) %>% 
 	split(.$unique_id)
 
 
@@ -159,3 +152,81 @@ rsqrs <- all_output1 %>%
 	data.frame(.) %>% 
 	rename(rsq = X1,
 				 unique_id = X2)
+
+View(rsqrs)
+rsqrs %>% 
+	filter(!grepl("32", unique_id)) %>% 
+	mutate(rsq = as.numeric(as.character(rsq))) %>% 
+	summarise(mean_r = mean(rsq))
+
+# Fit 32 separately -------------------------------------------------------
+
+TT_32 <- TT_fit %>% 
+	filter(temperature == 32, cell_density > 999) %>% 
+	mutate(cell_density = ifelse(cell_density == 2200, 1000, cell_density)) 
+
+fits_32 <- TT_32 %>% 
+	group_by(unique_id) %>% 
+	nest() %>% 
+	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/1000 - 1)*exp(-r*days)),
+																								data = .x,
+																								iter = 500,
+																								start_lower = c(K = 100, r = 0),
+																								start_upper = c(K = 5000, r = 1),
+																								supp_errors = 'N',
+																								na.action = na.omit,
+																								lower = c(K = 100, r = 0),
+																								upper = c(K = 5000, r = 2),
+																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
+
+preds32 <- fits_32 %>%
+	unnest(fit %>% map(augment, newdata = new_preds))  
+
+preds32 <- preds32 %>% 
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature))
+
+
+fit_growth32 <- function(data){
+	df <- data
+	res <- nls_multstart(cell_density ~ K/(1 + (K/1000 - 1)*exp(-r*days)),
+											 data = df,
+											 iter = 500,
+											 start_lower = c(K = 100, r = 0),
+											 start_upper = c(K = 1000, r = 1),
+											 supp_errors = 'Y',
+											 na.action = na.omit,
+											 lower = c(K = 100, r = 0),
+											 upper = c(K = 5000, r = 2),
+											 control = nls.control(maxiter=1000, minFactor=1/204800000))
+	
+	expected<-logistic(df$days, coef(res)[2], coef(res)[1])
+	rsqr<-1-sum((df$cell_density-expected)^2)/sum((df$cell_density-mean(df$cell_density))^2)
+	names(rsqr) <- "rsquared"
+	unique_id <- df$unique_id[[1]]
+	all <- cbind(rsqr, unique_id)
+	return(all)
+}
+tt_split32 <- TT_32 %>% 
+	split(.$unique_id)
+
+
+all_output32 <- tt_split32 %>% 
+	map_df(fit_growth32) 
+
+rsqrs_32 <- all_output32 %>% 
+	t(.) %>% 
+	data.frame(.) %>% 
+	rename(rsq = X1,
+				 unique_id = X2)
+
+ggplot() +
+	# geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
+	geom_line(aes(x = days, y = .fitted), data = filter(preds32, temperature < 33)) +
+	# geom_line(aes(x = days, y = .fitted), data = filter(preds1b, temperature < 33), color = "red") +
+	facet_wrap( ~ rep, labeller = labeller(.multi_line = FALSE)) +
+	theme(strip.background = element_rect(colour="white", fill="white")) + 
+	theme(text = element_text(size=14, family = "Arial")) +
+	# geom_point(aes(x = days, y = cell_density), data = filter(TT_fit1, temperature < 33), color = "red") +
+	geom_point(aes(x = days, y = cell_density), data = TT_32) +
+	xlab("Time (days)") + ylab("Population abundance (cells/ml)")

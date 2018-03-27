@@ -24,22 +24,22 @@ all_sizes %>%
 	group_by(temperature, rep, date) %>% 
 	summarise(mean_size = mean(volume_abd)) %>% 
 	ungroup() %>% 
-	ggplot(aes(x = temperature, y = mean_size, group = date, color = date)) + geom_point() +
-	geom_smooth(method = "lm") + theme_classic() + 
+	ggplot(aes(x = temperature, y = mean_size)) + geom_point() +
+	geom_smooth(method = "lm", color = "black") + theme_classic() + 
 	facet_wrap( ~ date) + ylab("Cell biovolume (um3/cell)") + xlab("Temperature (°C)")
 	
 
 all_sizes %>% 
 	mutate(date = ymd(date)) %>% 
-	filter(date > "2016-11-29", temperature == 5) %>% View
-	# group_by(temperature, rep) %>%
+	filter(date == "2016-12-01") %>% 
+	group_by(temperature, rep) %>%
 	# ggplot(aes(x = temperature, y = volume_abd, group = date, color = date)) + geom_point() +
 	# geom_smooth(method = "lm") + theme_classic()
-	summarise(mean_size = mean(volume_abd)) %>% View
+	summarise(mean_size = mean(volume_abd)) %>% 
 	ungroup() %>%
 	do(tidy(lm(mean_size ~ temperature, data = .), conf.int = TRUE)) %>% View
 
-(-15.42491/842.1866)*100
+(-15.42491/842.1866)*100 ## equivalent to a -1.83 decline in cell size per degree C
 
 all_sizes %>% 
 	mutate(date = ymd(date)) %>% 
