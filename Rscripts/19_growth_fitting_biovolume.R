@@ -102,7 +102,8 @@ p2 <- params_biovolume %>%
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
-	filter(term == "K")
+	filter(term == "K") %>% 
+	mutate(k_biomass = 0.109 *(estimate)^0.991)
 
 write_csv(p2, "data-processed/K-estimates-biomass-edit.csv")
 
