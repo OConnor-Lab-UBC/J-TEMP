@@ -122,7 +122,7 @@ ggsave("figures/K_biovolume.pdf", width = 4, height = 3.5)
 p2 %>% 
 	filter(temperature < 31) %>% 
 	ungroup() %>% 
-	lm(log(estimate) ~ inverse_temp, data = .) %>% 
+	lm(log(estimate) ~ inverse_temp, data = .) %>% summary()
 	tidy(., conf.int = TRUE)
 
 # term  estimate std.error statistic      p.value  conf.low conf.high

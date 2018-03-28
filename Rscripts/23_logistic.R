@@ -1,13 +1,18 @@
+TT_fit %>% 
+	filter(temperature == 32) %>% View
+
+
 
 TT_fit <- sea %>% 
 	filter(species == "TT") %>% 
 	filter(temperature < 38) %>% 
-	mutate(cell_density = ifelse(cell_density < 2000, 2500, cell_density)) %>% 
-	mutate(cell_density = ifelse(cell_density == 2200, 1500, cell_density)) %>% 
-	# mutate(cell_density = ifelse(cell_density == 2200 & temperature == 5, 500, cell_density)) %>% 
+	filter(cell_density > 1000) %>% 
+	# mutate(cell_density = ifelse(cell_density < 2000, 1000, cell_density)) %>% 
+	# mutate(cell_density = ifelse(cell_density == 2200, 1500, cell_density)) %>% 
+	# mutate(cell_density = ifelse(cell_density < 2200 & temperature == 5, 500, cell_density)) %>% 
 	filter(cell_density != 19767, cell_density != 30185, cell_density != 23949, cell_density != 5638, cell_density != 6505,
 				 cell_density != 14164, cell_density != 13597, cell_density != 14438, cell_density != 14650,
-				 cell_density != 15049,cell_density != 14530) %>% 
+				 cell_density != 15049,cell_density != 14530, cell_density != 5993) %>% 
 	select(temperature, rep, cell_density, cell_volume, time_since_innoc_hours, start_time) %>% 
 	mutate(time_since_innoc_hours = ifelse(is.na(time_since_innoc_hours), 12.18056, time_since_innoc_hours)) %>% 
 	mutate(days = time_since_innoc_hours/24) %>% 
@@ -18,7 +23,7 @@ write_csv(TT_fit, "data-processed/TT_fit_edit.csv")
 fits_many <- TT_fit %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
-	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/1500 - 1)*exp(-r*days)),
+	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
 																								data = .x,
 																								iter = 500,
 																								start_lower = c(K = 100, r = 0),
@@ -50,7 +55,7 @@ CI <- fits_many %>%
 
 
 params <- merge(params, CI, by = intersect(names(params), names(CI)))
-
+write_csv(params, "data-processed/params-edit.csv")
 
 params %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
@@ -69,8 +74,6 @@ params %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	filter(term == "K") %>% 
 	ungroup() %>% 
-	# ggplot(aes(x = inverse_temp, y = estimate)) + geom_point() + geom_smooth(method = "lm") +
-	# scale_x_reverse()
 	lm(log(estimate) ~ inverse_temp, data = .) %>% 
 tidy(., conf.int = TRUE)
 
@@ -82,17 +85,20 @@ params %>%
 	filter(term == "K") %>% 
 	ggplot(aes(x = inverse_temp, y = log(estimate))) +
 	geom_smooth(method = "lm", color = "black") +
-	geom_point(size = 2, alpha = 0.5) +
-	geom_point(size = 2, shape = 1) +
-	# geom_point(aes(x = inverse_temp, y = log(estimate)), data = p_hot, color = "black", size = 2, alpha = 0.5) +
-	ylab("Ln carrying capacity (cells/ml)") +
+	geom_point(size = 4, alpha = 0.5) +
+	geom_point(size = 4, shape = 1) +
 	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
-	ggtitle("Temperature (°C)") +
-	theme(text = element_text(size=14, family = "Arial")) +
+	ylab("Ln carrying capacity (cells/ml)") +
+	theme(text = element_text(size=12, family = "Arial")) +
 	theme(panel.border = element_rect(colour = "black", fill=NA, size=0.5)) +
 	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
-	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-				panel.background = element_blank(), axis.line = element_line(colour = "black"))
+	theme_bw() +
+	theme(text = element_text(size=12, family = "Arial"),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				panel.background = element_rect(colour = "black", size=0.5),
+				plot.title = element_text(hjust = 0.5, size = 12)) +
+	ggtitle("Temperature (°C)")
 ggsave("figures/figure2_no_32_edit.pdf", width = 4, height = 3.5)
 
 
@@ -103,6 +109,8 @@ preds3 <- preds2 %>%
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature))
 
+params %>% 
+	mutate(log_k = log(estimate)) %>% View
 
 ggplot() +
 	# geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
@@ -120,7 +128,7 @@ ggsave("figures/growth_trajectories_boot2_withCI_32C_new.pdf", width = 10, heigh
 
 fit_growth <- function(data){
 	df <- data
-	res <- nls_multstart(cell_density ~ K/(1 + (K/1500 - 1)*exp(-r*days)),
+	res <- nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
 											 data = df,
 											 iter = 500,
 											 start_lower = c(K = 100, r = 0),
@@ -152,6 +160,8 @@ rsqrs <- all_output1 %>%
 	data.frame(.) %>% 
 	rename(rsq = X1,
 				 unique_id = X2)
+
+write_csv(rsqrs, "data-processed/rsq-edit.csv")
 
 View(rsqrs)
 rsqrs %>% 
