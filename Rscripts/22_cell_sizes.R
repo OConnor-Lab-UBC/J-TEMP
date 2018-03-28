@@ -14,19 +14,55 @@ size_data_oct28 <- read_csv("data-processed/k-temp-all-cell-sizes-oct28.csv")
 all_sizes <- bind_rows(size_data_oct28, size_data_dec1, size_data_nov14, size_data_nov28, size_data_oct31)
 write_csv(all_sizes, "data-processed/cell_sizes.csv")
 
+
+all_sizes$start.time <- ymd("2016-10-28")
+
+all_sizes$day <- interval(all_sizes$start.time, all_sizes$date)
+all_sizes$exp_day <- (all_sizes$day/ddays(1)) + 1
+all_sizes2 <- all_sizes %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15))))  %>% 
+	mutate(exp_day = ifelse(exp_day == 1, "Day 1", exp_day)) %>% 
+	mutate(exp_day = ifelse(exp_day == 4, "Day 4", exp_day)) %>% 
+	mutate(exp_day = ifelse(exp_day == 18, "Day 18", exp_day)) %>% 
+	mutate(exp_day = ifelse(exp_day == 32, "Day 32", exp_day)) %>% 
+	mutate(exp_day = ifelse(exp_day == 35, "Day 35", exp_day)) %>% 
+	mutate(exp_day = as.factor(exp_day))
+
+all_sizes2$exp_day <- factor(all_sizes2$exp_day, levels = c("Day 1", "Day 4", "Day 18", "Day 32", "Day 35"))
+
 size_data %>% 
 	lm(cell_volume ~ temperature, data = .) %>% summary()
 
 library(viridis)
-all_sizes %>% 
+all_sizes2 %>% 
 	mutate(date = ymd(date)) %>% 
 	filter(temperature < 32) %>% 
-	group_by(temperature, rep, date) %>% 
+	group_by(inverse_temp, rep, exp_day) %>% 
 	summarise(mean_size = mean(volume_abd)) %>% 
 	ungroup() %>% 
-	ggplot(aes(x = temperature, y = mean_size)) + geom_point() +
+	mutate(cell_biomass_M = 0.109 *(mean_size)^0.991) %>% 
+	ggplot(aes(x = inverse_temp, y = cell_biomass_M))  +
 	geom_smooth(method = "lm", color = "black") + theme_classic() + 
-	facet_wrap( ~ date) + ylab("Cell biovolume (um3/cell)") + xlab("Temperature (°C)")
+	facet_wrap( ~ exp_day) + ylab("Cell biovolume (um3/cell)") + xlab("Temperature (°C)") +
+	geom_smooth(method = "lm", size =1, color = "black") +
+	theme_bw() + geom_point(size = 4, color = "black", alpha = 0.2) +
+	geom_point(size = 4, shape = 1) +
+	xlab("Temperature (1/kT)") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+	theme(text = element_text(size=14, family = "Arial")) +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
+	ylab(bquote('Cell size (ug C '*~cell^-1*')')) +
+	theme_bw() +
+	ggtitle("Temperature (°C)") +
+	theme(text = element_text(size=12, family = "Arial"),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				panel.background = element_rect(colour = "black", size=0.5),
+				plot.title = element_text(hjust = 0.5, size = 12))
+ggsave("figures/cell_size_time.pdf", width = 10, height = 6)
 	
 
 all_sizes %>% 
