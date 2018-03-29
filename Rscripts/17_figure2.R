@@ -12,6 +12,14 @@ kdata <- read_csv("data-processed/params-edit.csv") %>%
 
 
 
+kdata_hot <- read_csv("data-processed/params32.csv") %>% 
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	filter(term == "K") %>% 
+	mutate(set = "new")
+
+
 kdata_cool <- kdata %>% 
 	filter(temperature < 32)
 

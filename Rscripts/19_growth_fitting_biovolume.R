@@ -106,6 +106,33 @@ p2 <- params_biovolume %>%
 	mutate(k_biomass = 0.109 *(estimate)^0.991)
 
 write_csv(p2, "data-processed/K-estimates-biomass-edit.csv")
+p2 <- read_csv("data-processed/K-estimates-biomass-edit.csv")
+
+p3 <- p2 %>% 
+	mutate(Menden = 0.3584378*(estimate)^1.088) %>% 
+	mutate(Reynolds = 0.47*(estimate)^0.99) %>% 
+	mutate(Montagnes = 0.109 *(estimate)^0.991) 
+
+p4 <- p3 %>% 
+	gather(key = "conversion", value = "K", 11:13)
+
+p4 %>% 
+filter(temperature < 32) %>% 
+	ggplot(aes(x = inverse_temp, y = log(K))) + geom_point(size = 2, alpha = 0.5) +
+	facet_wrap( ~ conversion, scales = "free") + 
+	geom_smooth(method = "lm", color = "black") + 
+	scale_x_reverse() +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
+	ylab(bquote('Ln carrying capacity (ug C '*~mL^-1*')')) +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme_bw() +
+	theme(text = element_text(size=12, family = "Arial"),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				panel.background = element_rect(colour = "black", size=0.5),
+				plot.title = element_text(hjust = 0.5, size = 12)) +
+	ggtitle("Temperature (°C)")
+ggsave("figures/K_biomass_comparison_edit.pdf", width = 10, height = 4)
 
 p2 %>% 
 	filter(temperature < 31) %>% 
