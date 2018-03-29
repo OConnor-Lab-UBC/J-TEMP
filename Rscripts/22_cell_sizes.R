@@ -13,7 +13,7 @@ size_data_oct28 <- read_csv("data-processed/k-temp-all-cell-sizes-oct28.csv")
 
 all_sizes <- bind_rows(size_data_oct28, size_data_dec1, size_data_nov14, size_data_nov28, size_data_oct31)
 write_csv(all_sizes, "data-processed/cell_sizes.csv")
-
+all_sizes <- read_csv("data-processed/cell_sizes.csv")
 
 all_sizes$start.time <- ymd("2016-10-28")
 

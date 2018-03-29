@@ -147,6 +147,11 @@ fit_growth <- function(data){
 	return(all)
 }
 
+logistic <- function(days, r, K){
+	res <- K/(1 + (K/2200 - 1)*exp(-r*days))
+	res
+}
+
 tt_split <- TT_fit %>% 
 	# filter(temperature < 32) %>% 
 	split(.$unique_id)
