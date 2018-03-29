@@ -1,14 +1,13 @@
-TT_fit %>% 
-	filter(temperature == 32) %>% View
 
 
+sea <- read_csv("data-processed/sea_processed2.csv")
 
 TT_fit <- sea %>% 
 	filter(species == "TT") %>% 
 	filter(temperature < 38) %>% 
-	filter(cell_density > 1000) %>% 
+	# filter(cell_density > 1000) %>% 
 	# mutate(cell_density = ifelse(cell_density < 2000, 1000, cell_density)) %>% 
-	# mutate(cell_density = ifelse(cell_density == 2200, 1500, cell_density)) %>% 
+	mutate(cell_density = ifelse(cell_density == 2200, 1200, cell_density)) %>% 
 	# mutate(cell_density = ifelse(cell_density < 2200 & temperature == 5, 500, cell_density)) %>% 
 	filter(cell_density != 19767, cell_density != 30185, cell_density != 23949, cell_density != 5638, cell_density != 6505,
 				 cell_density != 14164, cell_density != 13597, cell_density != 14438, cell_density != 14650,
@@ -20,14 +19,16 @@ TT_fit <- sea %>%
 
 write_csv(TT_fit, "data-processed/TT_fit_edit.csv")
 
+TT_fit <- bind_rows(TT_fit, all38)
+
 fits_many <- TT_fit %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
-	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/1200 - 1)*exp(-r*days)),
 																								data = .x,
-																								iter = 500,
-																								start_lower = c(K = 100, r = 0),
-																								start_upper = c(K = 100000, r = 1),
+																								iter = 1000,
+																								start_lower = c(K = 1000, r = 0),
+																								start_upper = c(K = 20000, r = 1),
 																								supp_errors = 'N',
 																								na.action = na.omit,
 																								lower = c(K = 100, r = 0),
@@ -109,8 +110,6 @@ preds3 <- preds2 %>%
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature))
 
-params %>% 
-	mutate(log_k = log(estimate)) %>% View
 
 ggplot() +
 	# geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
@@ -128,7 +127,7 @@ ggsave("figures/growth_trajectories_boot2_withCI_32C_new.pdf", width = 10, heigh
 
 fit_growth <- function(data){
 	df <- data
-	res <- nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+	res <- nls_multstart(cell_density ~ K/(1 + (K/1200 - 1)*exp(-r*days)),
 											 data = df,
 											 iter = 500,
 											 start_lower = c(K = 100, r = 0),
@@ -148,7 +147,7 @@ fit_growth <- function(data){
 }
 
 logistic <- function(days, r, K){
-	res <- K/(1 + (K/2200 - 1)*exp(-r*days))
+	res <- K/(1 + (K/1200 - 1)*exp(-r*days))
 	res
 }
 
@@ -245,3 +244,25 @@ ggplot() +
 	# geom_point(aes(x = days, y = cell_density), data = filter(TT_fit1, temperature < 33), color = "red") +
 	geom_point(aes(x = days, y = cell_density), data = TT_32) +
 	xlab("Time (days)") + ylab("Population abundance (cells/ml)")
+
+
+# bootstrap ---------------------------------------------------------------
+
+boot_many <- group_by(TT_fit, unique_id) %>% 
+	# create 200 bootstrap replicates per curve
+	do(., boot = modelr::bootstrap(., n = 1000, id = 'boot_num')) %>% 
+	# unnest to show bootstrap number, .id
+	unnest() %>% 
+	# regroup to include the boot_num
+	group_by(., unique_id, boot_num) %>% 
+	# run the model using map()
+	mutate(fit = map(strap, ~ nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+																					data = data.frame(.),
+																					iter = 50,
+																					start_lower = c(K = 100, r = 0),
+																					start_upper = c(K = 10000, r = 1),
+																					supp_errors = 'Y',
+																					na.action = na.omit,
+																					lower = c(K = 100, r = 0),
+																					upper = c(K = 50000, r = 2),
+																					control = nls.control(maxiter=1000, minFactor=1/204800000))))

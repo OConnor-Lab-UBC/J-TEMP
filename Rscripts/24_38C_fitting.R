@@ -17,7 +17,8 @@ sea <- read_csv("data-processed/sea_processed2.csv")
 TT_38 <- sea %>% 
 	filter(species == "TT") %>% 
 	filter(temperature == 38) %>% 
-	# mutate(cell_density = ifelse(cell_density == 2200, 1000, cell_density)) %>% 
+	# mutate(cell_density = ifelse(cell_density == 2200, 2200, cell_density)) %>% 
+	mutate(cell_density = ifelse(cell_density < 2200, 1000, cell_density)) %>% 
 	select(temperature, rep, cell_density, cell_volume, time_since_innoc_hours, start_time) %>% 
 	mutate(time_since_innoc_hours = ifelse(is.na(time_since_innoc_hours), 12.18056, time_since_innoc_hours)) %>% 
 	mutate(days = time_since_innoc_hours/24) %>% 
@@ -25,13 +26,19 @@ TT_38 <- sea %>%
 	filter(time_since_innoc_hours < 14)
 
 
-all38 <- bind_rows(k38, TT_38)
+all38 <- bind_rows(k38, TT_38) %>% 
+	filter(days < 15)
+	mutate(cell_density = ifelse(cell_density < 2200, 1000, cell_density)) %>% 
+	mutate(cell_density = ifelse(days > 1, cell_density - 2000, cell_density)) %>% 
+	mutate(cell_density = ifelse(cell_density < 0, 0, cell_density))
+
+
 
 
 fits_38 <- all38 %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
-	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/50 - 1)*exp(-r*days)),
+	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
 																								data = .x,
 																								iter = 500,
 																								start_lower = c(K = 100, r = 0),
@@ -39,7 +46,7 @@ fits_38 <- all38 %>%
 																								supp_errors = 'N',
 																								na.action = na.omit,
 																								lower = c(K = 100, r = 0),
-																								upper = c(K = 4000, r = 2),
+																								upper = c(K = 2000, r = 2),
 																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
 new_preds <- all38 %>%
 	do(., data.frame(days = seq(min(.$days), max(.$days), length.out = 150), stringsAsFactors = FALSE))
@@ -78,12 +85,12 @@ ggplot() +
 	# geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
 	geom_line(aes(x = days, y = .fitted), data = preds38b) +
 	# geom_line(aes(x = days, y = .fitted), data = filter(preds1b, temperature < 33), color = "red") +
-	facet_grid(temperature ~ rep, labeller = labeller(.multi_line = FALSE)) +
+	facet_wrap( ~ rep, labeller = labeller(.multi_line = FALSE)) +
 	theme(strip.background = element_rect(colour="white", fill="white")) + 
 	theme(text = element_text(size=14, family = "Arial")) +
 	# geom_point(aes(x = days, y = cell_density), data = filter(TT_fit1, temperature < 33), color = "red") +
 	geom_point(aes(x = days, y = cell_density), data = all38) +
-	xlab("Time (days)") + ylab("Population abundance (cells/ml)")
+	xlab("Time (days)") + ylab("Population abundance (cells/ml)") + ylim(0, 30000) + xlim(0, 43)
 
 params %>% 
 	ggplot(aes(x = unique_id, y = estimate)) + geom_point() +
@@ -92,7 +99,7 @@ params %>%
 
 fit_growth <- function(data){
 	df <- data
-	res <- nls_multstart(cell_density ~ K/(1 + (K/50 - 1)*exp(-r*days)),
+	res <- nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
 											 data = df,
 											 iter = 500,
 											 start_lower = c(K = 100, r = 0),
@@ -100,7 +107,7 @@ fit_growth <- function(data){
 											 supp_errors = 'Y',
 											 na.action = na.omit,
 											 lower = c(K = 100, r = 0),
-											 upper = c(K = 4000, r = 2),
+											 upper = c(K = 2000, r = 2),
 											 control = nls.control(maxiter=1000, minFactor=1/204800000))
 	
 	expected<-logistic(df$days, coef(res)[2], coef(res)[1])
@@ -112,7 +119,7 @@ fit_growth <- function(data){
 }
 
 logistic <- function(days, r, K){
-	res <- K/(1 + (K/50 - 1)*exp(-r*days))
+	res <- K/(1 + (K/2200 - 1)*exp(-r*days))
 	res
 }
 
