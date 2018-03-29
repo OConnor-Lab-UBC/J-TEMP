@@ -21,7 +21,7 @@ library(extrafont)
 loadfonts()
 
 
-tt <- read_csv("data-processed/TT_fit.csv")
+tt <- read_csv("data-processed/TT_fit_edit.csv")
 
 
 ### now convert to biomass
@@ -42,15 +42,14 @@ tt_mass %>%
 
 tt_mass %>% 
 	filter(days < 1) %>% 
-	summarise(mean_biomass = mean(cell_biomass_M)) %>% View
+	summarise(mean_biomass = mean(cell_biomass_MD))
 
 
-
-294.5306*2200
-fits_many_biomass2 <- tt_mass %>% 
+430*1200
+fits_many_biomassMD <- tt_mass %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
-	mutate(fit = purrr::map(data, ~ nls_multstart(population_biomass_MD ~ K/(1 + (K/935258.1 - 1)*exp(-r*days)),
+	mutate(fit = purrr::map(data, ~ nls_multstart(population_biomass_MD ~ K/(1 + (K/516000 - 1)*exp(-r*days)),
 																								data = .x,
 																								iter = 500,
 																								start_lower = c(K = 100, r = 0),
@@ -60,11 +59,20 @@ fits_many_biomass2 <- tt_mass %>%
 																								lower = c(K = 100, r = 0),
 																								upper = c(K = 50000000000, r = 200),
 																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
+tt_mass %>% 
+	filter(days < 1) %>% 
+	summarise(mean_biomass = mean(cell_biomass_M)) 
 
+
+tt_mass %>% 
+	filter(days < 1) %>% 
+	summarise(mean_biomass = mean(cell_biomass_R))
+
+298.5306*1200
 fits_many_biomassR <- tt_mass %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
-	mutate(fit = purrr::map(data, ~ nls_multstart(population_biomass_R ~ K/(1 + (K/647967.3 - 1)*exp(-r*days)),
+	mutate(fit = purrr::map(data, ~ nls_multstart(population_biomass_R ~ K/(1 + (K/358236.7 - 1)*exp(-r*days)),
 																								data = .x,
 																								iter = 500,
 																								start_lower = c(K = 100, r = 0),
@@ -74,11 +82,14 @@ fits_many_biomassR <- tt_mass %>%
 																								lower = c(K = 100, r = 0),
 																								upper = c(K = 50000000000, r = 200),
 																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
-68.75212*2200
+tt_mass %>% 
+	filter(days < 1) %>% 
+	summarise(mean_biomass = mean(cell_biomass_M))
+69.5*1200
 fits_many_biomassM <- tt_mass %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
-	mutate(fit = purrr::map(data, ~ nls_multstart(population_biomass_M ~ K/(1 + (K/151254.7 - 1)*exp(-r*days)),
+	mutate(fit = purrr::map(data, ~ nls_multstart(population_biomass_M ~ K/(1 + (K/83400 - 1)*exp(-r*days)),
 																								data = .x,
 																								iter = 500,
 																								start_lower = c(K = 100, r = 0),
@@ -97,7 +108,7 @@ info_biomassR <- fits_many_biomassR %>%
 	unnest(fit %>% map(glance))
 
 # get params
-params_biomass2 <- fits_many_biomass2 %>%
+params_biomassMD <- fits_many_biomassMD %>%
 	unnest(fit %>% map(tidy))
 
 params_biomassR <- fits_many_biomassR %>%
@@ -109,7 +120,7 @@ params_biomassM <- fits_many_biomassM %>%
 new_preds <- tt_mass %>%
 	do(., data.frame(days = seq(min(.$days), max(.$days), length.out = 150), stringsAsFactors = FALSE))
 
-preds_many_fits_biomass2 <- fits_many_biomass2 %>%
+preds_many_fits_biomassMD <- fits_many_biomassMD %>%
 	unnest(fit %>% map(augment, newdata = new_preds))
 
 preds_many_fits_biomassR <- fits_many_biomassR %>%
@@ -156,6 +167,12 @@ p2_biomassM <- params_biomassM %>% ## montagnes
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	filter(term == "K")
 
+p2_biomassMD <- params_biomassMD %>% ## montagnes
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	filter(term == "K")
+
 p2_biomassR <- params_biomassR %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
@@ -195,15 +212,16 @@ p2_biomassR$conversion <- "Reynolds"
 
 p2_biomassM %>% 
 	filter(temperature < 32) %>% 
-	lm(log(estimate) ~ inverse_temp, data =.) %>% summary()
+	lm(log(estimate) ~ inverse_temp, data =.) %>% 
+	tidy(., conf.int = TRUE)
 
 p2_biomassMD %>% 
 	filter(temperature < 32) %>% 
-	lm(log(estimate) ~ inverse_temp, data =.) %>% summary()
+	lm(log(estimate) ~ inverse_temp, data =.) %>% 	tidy(., conf.int = TRUE)
 
 p2_biomassR %>% 
 	filter(temperature < 32) %>% 
-	lm(log(estimate) ~ inverse_temp, data =.) %>% summary()
+	lm(log(estimate) ~ inverse_temp, data =.) %>% 	tidy(., conf.int = TRUE)
 
 bind_rows(p2_biomassM, p2_biomassMD, p2_biomassR) %>% 
 	filter(temperature < 32) %>% 

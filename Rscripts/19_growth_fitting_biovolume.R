@@ -113,6 +113,13 @@ p3 <- p2 %>%
 	mutate(Reynolds = 0.47*(estimate)^0.99) %>% 
 	mutate(Montagnes = 0.109 *(estimate)^0.991) 
 
+
+p3 %>% 
+	do(tidy(lm(log(Menden) ~ inverse_temp, data = .), conf.int = TRUE))
+p3 %>% 
+lm(log(Montagnes) ~ inverse_temp, data = .) %>% summary()
+
+
 p4 <- p3 %>% 
 	gather(key = "conversion", value = "K", 11:13)
 
