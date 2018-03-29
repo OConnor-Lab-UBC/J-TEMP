@@ -17,8 +17,8 @@ sea <- read_csv("data-processed/sea_processed2.csv")
 TT_38 <- sea %>% 
 	filter(species == "TT") %>% 
 	filter(temperature == 38) %>% 
-	# mutate(cell_density = ifelse(cell_density == 2200, 2200, cell_density)) %>% 
-	mutate(cell_density = ifelse(cell_density < 2200, 1000, cell_density)) %>% 
+	mutate(cell_density = ifelse(cell_density == 2200, 1200, cell_density)) %>% 
+	mutate(cell_density = ifelse(cell_density < 2200, 1200, cell_density)) %>% 
 	select(temperature, rep, cell_density, cell_volume, time_since_innoc_hours, start_time) %>% 
 	mutate(time_since_innoc_hours = ifelse(is.na(time_since_innoc_hours), 12.18056, time_since_innoc_hours)) %>% 
 	mutate(days = time_since_innoc_hours/24) %>% 
@@ -26,11 +26,7 @@ TT_38 <- sea %>%
 	filter(time_since_innoc_hours < 14)
 
 
-all38 <- bind_rows(k38, TT_38) %>% 
-	filter(days < 15)
-	mutate(cell_density = ifelse(cell_density < 2200, 1000, cell_density)) %>% 
-	mutate(cell_density = ifelse(days > 1, cell_density - 2000, cell_density)) %>% 
-	mutate(cell_density = ifelse(cell_density < 0, 0, cell_density))
+all38 <- bind_rows(k38, TT_38) 
 
 
 
@@ -38,7 +34,7 @@ all38 <- bind_rows(k38, TT_38) %>%
 fits_38 <- all38 %>% 
 	group_by(unique_id) %>% 
 	nest() %>% 
-	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+	mutate(fit = purrr::map(data, ~ nls_multstart(cell_density ~ K/(1 + (K/1200 - 1)*exp(-r*days)),
 																								data = .x,
 																								iter = 500,
 																								start_lower = c(K = 100, r = 0),
@@ -46,28 +42,28 @@ fits_38 <- all38 %>%
 																								supp_errors = 'N',
 																								na.action = na.omit,
 																								lower = c(K = 100, r = 0),
-																								upper = c(K = 2000, r = 2),
+																								upper = c(K = 40000, r = 2),
 																								control = nls.control(maxiter=1000, minFactor=1/204800000))))
-new_preds <- all38 %>%
+new_preds38 <- all38 %>%
 	do(., data.frame(days = seq(min(.$days), max(.$days), length.out = 150), stringsAsFactors = FALSE))
 
 preds_38 <- fits_38 %>%
-	unnest(fit %>% map(augment, newdata = new_preds))
+	unnest(fit %>% map(augment, newdata = new_preds38))
 
 preds38b <- preds_38 %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature))
-info <- fits_38 %>%
+info38 <- fits_38 %>%
 	unnest(fit %>% map(glance))
 
 # get params
-params <- fits_38 %>%
+params38 <- fits_38 %>%
 	unnest(fit %>% map(tidy))
 
 
 
 # get confidence intervals
-CI <- fits_38 %>% 
+CI38 <- fits_38 %>% 
 	unnest(fit %>% map(~ confint2(.x) %>%
 										 	data.frame() %>%
 										 	rename(., conf.low = X2.5.., conf.high = X97.5..))) %>% 
@@ -78,8 +74,8 @@ CI <- fits_38 %>%
 
 
 # merge parameters and CI estimates
-params <- merge(params, CI, by = intersect(names(params), names(CI)))
-
+params38 <- merge(params38, CI38, by = intersect(names(params38), names(CI38)))
+write_csv(params38, "data-processed/params38.csv")
 
 ggplot() +
 	# geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
@@ -92,14 +88,15 @@ ggplot() +
 	geom_point(aes(x = days, y = cell_density), data = all38) +
 	xlab("Time (days)") + ylab("Population abundance (cells/ml)") + ylim(0, 30000) + xlim(0, 43)
 
-params %>% 
+params38 %>% 
 	ggplot(aes(x = unique_id, y = estimate)) + geom_point() +
+	geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.1) +
 	facet_wrap(~ term, scales = "free")
 
 
 fit_growth <- function(data){
 	df <- data
-	res <- nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+	res <- nls_multstart(cell_density ~ K/(1 + (K/1200 - 1)*exp(-r*days)),
 											 data = df,
 											 iter = 500,
 											 start_lower = c(K = 100, r = 0),
@@ -119,7 +116,7 @@ fit_growth <- function(data){
 }
 
 logistic <- function(days, r, K){
-	res <- K/(1 + (K/2200 - 1)*exp(-r*days))
+	res <- K/(1 + (K/1200 - 1)*exp(-r*days))
 	res
 }
 
