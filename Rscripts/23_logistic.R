@@ -19,7 +19,13 @@ TT_fit <- sea %>%
 
 write_csv(TT_fit, "data-processed/TT_fit_edit.csv")
 
-TT_fit <- bind_rows(TT_fit, all38)
+TT_25 <- TT_fit %>% 
+	filter(temperature == 25, days < 17)
+
+TT_25 %>% 
+	ggplot(aes(x = days, y = cell_density)) + geom_point() +
+	facet_wrap( ~ rep)
+
 
 fits_many <- TT_fit %>% 
 	group_by(unique_id) %>% 

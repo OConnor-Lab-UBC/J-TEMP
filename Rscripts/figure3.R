@@ -1,6 +1,7 @@
 
 
 library(tidyverse)
+library(lubridate)
 
 
 k_biomass <- read_csv("data-processed/K-estimates-biomass-edit.csv")
@@ -41,7 +42,7 @@ cell_sizes2 %>%
 	summarise(mean_size = mean(cell_biomass_M))  
 
 
-cell_means <- cell_sizes3 %>% 
+cell_means <- cell_sizes2 %>% 
 	group_by(inverse_temp, rep, temperature) %>%
 	# ggplot(aes(x = temperature, y = volume_abd, group = date, color = date)) + geom_point() +
 	# geom_smooth(method = "lm") + theme_classic()
