@@ -101,7 +101,10 @@ all_sizes %>%
 	lm(mean_size ~ inverse_temp, data = .) %>% summary()
 
 
-(-15.42491/842.1866)*100 ## equivalent to a -1.83 decline in cell size per degree C
+(-15.42491/842.1866)*100
+(-18.99854/842.1866)*100## equivalent to a -1.83 decline in cell size per degree C
+(-11.85129/842.1866)*100
+	
 
 all_sizes %>% 
 	mutate(date = ymd(date)) %>% 
