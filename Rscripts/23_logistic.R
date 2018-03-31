@@ -84,6 +84,48 @@ params %>%
 	lm(log(estimate) ~ inverse_temp, data = .) %>% summary
 tidy(., conf.int = TRUE)
 
+
+### now try with mass^1/4
+
+all_p <- left_join(params, masses)
+
+
+all_p %>% 
+	# separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	# filter(estimate < 50000) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(temperature < 32) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	filter(term == "K") %>% 
+	ungroup() %>% 
+	lm(log(estimate*(mean_size^(3/4))) ~ inverse_temp, data = .) %>% 
+	tidy(., conf.int = TRUE)
+
+all_p %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(temperature < 32) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	filter(term == "K") %>% 
+	ggplot(aes(x = inverse_temp, y = log(estimate*(mean_size^(3/4))))) +
+	geom_smooth(method = "lm", color = "black") +
+	geom_point(size = 4, alpha = 0.5) +
+	geom_point(size = 4, shape = 1) +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
+	ylab("Ln (carrying capacity (cells/ml) * M^3/4)") +
+	theme(text = element_text(size=12, family = "Arial")) +
+	theme(panel.border = element_rect(colour = "black", fill=NA, size=0.5)) +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme_bw() +
+	theme(text = element_text(size=12, family = "Arial"),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				panel.background = element_rect(colour = "black", size=0.5),
+				plot.title = element_text(hjust = 0.5, size = 12)) +
+	ggtitle("Temperature (°C)")
+
+ggsave("figures/figure2_mass_exponent.pdf", width = 4, height = 3.5)
+
+
 params %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 

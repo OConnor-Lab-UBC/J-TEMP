@@ -38,11 +38,11 @@ kdata_hot <- kdata %>%
 
 	x <- seq(278.15, 278.15+20, by = 0.01)
 	tsr_pred <- function(x) {
-		y <- 4.6*((1000 + ((-1.80/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
+		y <- 4.6*((85 + ((-1.83/100)*85)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
 	} 
 	
 	savage_pred <- function(x) {
-		y <- 4.6*((1000 + ((0/100)*1000)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
+		y <- 4.6*((85 + ((0/100)*85)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x))
 	} 
 	
 	tsr_predictions <- sapply(x, tsr_pred)
@@ -52,6 +52,16 @@ kdata_hot <- kdata %>%
 	
 	pred_df2 <- pred_df %>% 
 		mutate(inverse_temp = 1/(8.62 * 10^(-5)*temperature_kelvin))
+	
+	pred_df2 %>% 
+		lm(log(K_tsr) ~ inverse_temp, data = .) %>% 
+		tidy(., conf.int = TRUE)
+	
+	pred_df2 %>% 
+		lm(log(K_savage) ~ inverse_temp, data = .) %>% 
+		tidy(., conf.int = TRUE)
+	
+	
 	
 	ggplot(aes(x = inverse_temp, y = log(estimate)), data = kdata_cool) + 
 		geom_smooth(method = "lm", color = "black") +

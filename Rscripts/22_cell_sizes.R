@@ -68,10 +68,10 @@ ggsave("figures/cell_size_time.pdf", width = 10, height = 6)
 all_sizes %>% 
 	mutate(date = ymd(date)) %>% 
 	filter(date == "2016-12-01") %>% 
+	mutate(cell_biomass_M = 0.109*(volume_abd)^0.991) %>% 
+	mutate(cell_biomass_MD = 0.3584378*(volume_abd)^1.088) %>% 
 	group_by(temperature, rep) %>%
-	# ggplot(aes(x = temperature, y = volume_abd, group = date, color = date)) + geom_point() +
-	# geom_smooth(method = "lm") + theme_classic()
-	summarise(mean_size = mean(volume_abd)) %>% 
+	summarise(mean_size = mean(cell_biomass_M)) %>% 
 	ungroup() %>%
 	do(tidy(lm(mean_size ~ temperature, data = .), conf.int = TRUE)) %>% View
 
@@ -80,11 +80,12 @@ all_sizes %>%
 	mutate(date = ymd(date)) %>% 
 	filter(date == "2016-12-01") %>% 
 	mutate(cell_biomass_MD = 0.3584378*(volume_abd)^1.088) %>% 
+	mutate(cell_biomass_M = 0.109*(volume_abd)^0.991) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	group_by(temperature, rep, inverse_temp) %>%
 	# ggplot(aes(x = temperature, y = volume_abd, group = date, color = date)) + geom_point() +
 	# geom_smooth(method = "lm") + theme_classic()
-	summarise(mean_size = mean(cell_biomass_MD)) %>% 
+	summarise(mean_size = mean(cell_biomass_M)) %>% View
 	ungroup() %>%
 	lm(mean_size ~ inverse_temp, data = .) %>% summary()
 
@@ -92,11 +93,12 @@ all_sizes %>%
 	mutate(date = ymd(date)) %>% 
 	filter(date == "2016-12-01") %>% 
 	mutate(cell_biomass_MD = 0.3584378*(volume_abd)^1.088) %>% 
+	mutate(cell_biomass_M = 0.109*(volume_abd)^0.991) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	group_by(temperature, rep, inverse_temp) %>%
 	# ggplot(aes(x = temperature, y = volume_abd, group = date, color = date)) + geom_point() +
 	# geom_smooth(method = "lm") + theme_classic()
-	summarise(mean_size = mean(volume_abd)) %>% 
+	summarise(mean_size = mean(cell_biomass_M)) %>% 
 	ungroup() %>%
 	lm(mean_size ~ inverse_temp, data = .) %>% summary()
 
@@ -104,6 +106,17 @@ all_sizes %>%
 (-15.42491/842.1866)*100
 (-18.99854/842.1866)*100## equivalent to a -1.83 decline in cell size per degree C
 (-11.85129/842.1866)*100
+	
+	
+masses <- all_sizes %>% 
+		mutate(date = ymd(date)) %>% 
+		filter(date == "2016-12-01") %>% 
+		mutate(cell_biomass_MD = 0.3584378*(volume_abd)^1.088) %>% 
+	mutate(cell_biomass_M = 0.109*(volume_abd)^0.991) %>% 
+		mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+		group_by(temperature, rep, inverse_temp) %>%
+		summarise(mean_size = mean(cell_biomass_M)) %>% 
+	unite(col = unique_id, sep = "_", temperature, rep, remove = FALSE)
 	
 
 all_sizes %>% 
