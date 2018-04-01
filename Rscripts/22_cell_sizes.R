@@ -119,6 +119,18 @@ masses <- all_sizes %>%
 	unite(col = unique_id, sep = "_", temperature, rep, remove = FALSE)
 	
 
+
+
+masses %>% 
+	lm(mean_size ~ temperature, data = .) %>% tidy(., conf.int = TRUE)
+
+(-1.5716/81.87)
+(-1.935209/81.87)
+( -1.207894/81.87)
+size_function <- function(x) 89.7285 -1.5716*x
+
+size_function(20)
+
 all_sizes %>% 
 	mutate(date = ymd(date)) %>% 
 	filter(date > "2016-11-29") %>%

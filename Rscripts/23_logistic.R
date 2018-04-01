@@ -88,7 +88,7 @@ tidy(., conf.int = TRUE)
 ### now try with mass^1/4
 
 all_p <- left_join(params, masses)
-
+write_csv(all_p, "data-processed/K-params-masses.csv")
 
 all_p %>% 
 	# separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
@@ -100,6 +100,21 @@ all_p %>%
 	ungroup() %>% 
 	lm(log(estimate*(mean_size^(3/4))) ~ inverse_temp, data = .) %>% 
 	tidy(., conf.int = TRUE)
+
+all_p %>% 
+	# separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	# filter(estimate < 50000) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(temperature < 32) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	filter(term == "K") %>% 
+	ungroup() %>% 
+	lm(log(estimate*(68.51255^(3/4))) ~ inverse_temp, data = .) %>% 
+	tidy(., conf.int = TRUE)
+
+all_p %>% 
+	summarise(mean_all_size = mean(mean_size))
+
 
 all_p %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
