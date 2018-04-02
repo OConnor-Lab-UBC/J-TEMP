@@ -52,9 +52,22 @@ cell_means <- cell_sizes2 %>%
 cell_means %>% 
 	lm(mean_size ~ inverse_temp, data = .) %>% summary()
 
-cell_size_plot <- cell_means %>% 
+
+masses <- read_csv("data-processed/cell-masses-dec1.csv")
+
+
+masses_mean <- masses %>% 
+group_by(inverse_temp, temperature) %>% 
+	summarise(mean_size = mean(mean_size)) 
+
+
+masses %>% 
+	lm(mean_size ~ inverse_temp, data = .) %>% summary()
+
+
+cell_size_plot <- masses %>% 
 	ggplot(aes(x = inverse_temp, y = mean_size)) +
-	geom_jitter(aes(x = inverse_temp, y = cell_biomass_M, group = inverse_temp), data = cell_sizes3, color = "darkgrey", fill = "grey", size = 1.5, width = 0.1, alpha = 0.7) +
+	geom_jitter(aes(x = inverse_temp, y = cell_biomass_M, group = inverse_temp), data = cell_sizes2, color = "darkgrey", fill = "grey", size = 1.5, width = 0.1, alpha = 0.7) +
 	geom_smooth(method = "lm", size =1, color = "black") +
 	theme_bw() + geom_point(size = 4, color = "black", alpha = 0.2) +
 	geom_point(size = 4, shape = 1) +

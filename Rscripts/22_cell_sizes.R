@@ -118,7 +118,7 @@ masses <- all_sizes %>%
 		summarise(mean_size = mean(cell_biomass_M)) %>% 
 	unite(col = unique_id, sep = "_", temperature, rep, remove = FALSE)
 	
-
+write_csv(masses, "data-processed/cell-masses-dec1.csv")
 
 
 masses %>% 
