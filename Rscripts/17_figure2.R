@@ -80,7 +80,7 @@ kdata_hot <- kdata %>%
 		geom_smooth(method = "lm", color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed") +
 		theme_bw() + geom_point(size = 4, shape = 1, color = "black") +
 		geom_point(size = 4, alpha = 0.2) +
-		# geom_point(data = filter(kdata_hot, log(estimate) < 10), aes(x = inverse_temp, y = log(estimate)), size = 4, shape = 1) +
+		geom_point(data = filter(kdata_hot, log(estimate) < 10), aes(x = inverse_temp, y = log(estimate*(68.51255^0.75))), size = 4, shape = 1) +
 		xlab("Temperature (1/kT)") + ylab("Ln (carrying capacity (cells/mL))") +
 		theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 					panel.background = element_blank(), axis.line = element_line(colour = "black")) +
