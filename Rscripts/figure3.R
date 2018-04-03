@@ -64,6 +64,10 @@ group_by(inverse_temp, temperature) %>%
 masses %>% 
 	lm(mean_size ~ inverse_temp, data = .) %>% summary()
 
+masses %>% 
+	lm(mean_size ~ temperature, data = .) %>% 
+	tidy(., conf.int = TRUE)
+
 
 cell_size_plot <- masses %>% 
 	ggplot(aes(x = inverse_temp, y = mean_size)) +
