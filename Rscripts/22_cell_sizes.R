@@ -122,7 +122,21 @@ write_csv(masses, "data-processed/cell-masses-dec1.csv")
 
 
 masses %>% 
-	lm(mean_size ~ temperature, data = .) %>% tidy(., conf.int = TRUE)
+	lm(log(mean_size) ~ inverse_temp, data = .) %>% tidy(., conf.int = TRUE)
+masses %>% 
+	lm(log(mean_size) ~ inverse_temp, data = .) %>% summary()
+
+masses %>% 
+	lm(mean_size ~ temperature, data = .) %>% summary()
+
+
+masses %>% 
+	ggplot(aes(x = inverse_temp, y = log(mean_size))) + geom_point()
+
+masses %>% 
+	ggplot(aes(x = temperature, y = mean_size)) + geom_point()
+
+
 
 (-1.5716/81.87)
 (-1.935209/81.87)

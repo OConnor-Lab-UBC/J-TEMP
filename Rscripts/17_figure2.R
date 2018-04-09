@@ -49,8 +49,8 @@ kdata_hot <- kdata %>%
 	filter(temperature == 32)
 
 	x <- seq(278.15, 278.15+20, by = 0.01)
-	tsr_pred <- function(x) {
-		y <- (15.66*(81.87 + ((-1.92/100)*81.87)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x)) 
+	tsr_pred<- function(x) {
+		y <- (15.5*(81.87 + ((-1.92/100)*81.87)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x)) 
 	} 
 	
 	savage_pred <- function(x) {
@@ -77,7 +77,8 @@ kdata_hot <- kdata %>%
 	plot2a <- ggplot(aes(x = inverse_temp, y = log(estimate*(68.51255^0.75))), data = kdata_cool) + 
 		geom_smooth(method = "lm", color = "black") +
 		geom_line(aes(x = inverse_temp, y = log(K_savage)), data = pred_df2, linetype = "dotted", size = 1) +
-		geom_smooth(method = "lm", color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed") +
+		# geom_smooth(method = "lm", color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed") +
+		geom_line(color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed", size =1.5) +
 		theme_bw() + geom_point(size = 4, shape = 1, color = "black") +
 		geom_point(size = 4, alpha = 0.2) +
 		geom_point(data = filter(kdata_hot, log(estimate) < 10), aes(x = inverse_temp, y = log(estimate*(68.51255^0.75))), size = 4, shape = 1) +
@@ -129,7 +130,7 @@ plot2b <- ggplot(aes(x = inverse_temp, y = log(estimate*(mean_size^0.75))), data
 	
 	
 fig2 <- plot_grid(plot2a, plot2b, labels = c("A)", "B)"), label_fontface = "plain", ncol = 2, nrow = 1, label_x = 0, hjust = 0)
-save_plot("figures/k-temp-figure2-mass.pdf", fig2, nrow = 1, ncol = 2, base_height = 4.2, base_width = 4.5)
+save_plot("figures/k-temp-figure2-mass-curve.pdf", fig2, nrow = 1, ncol = 2, base_height = 4.2, base_width = 4.5)
 
 	
 	pred_df2 %>% 
@@ -153,3 +154,28 @@ ggsave("figures/k-temp-figure2_no_32.pdf", width = 5, height = 4)
 
 library(extrafont)
 fonts()
+
+
+# messing around with equations -------------------------------------------
+
+ggplot(aes(x = inverse_temp, y = log(estimate*(68.51255^0.75))), data = kdata_cool) + 
+	# geom_smooth(method = "lm", color = "black") +
+	geom_line(aes(x = inverse_temp, y = log(K_savage)), data = pred_df2, linetype = "dotted", size = 1) +
+	# geom_smooth(method = "lm", color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed") +
+	geom_line(color = "purple", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), size = 1) +
+	theme_bw() + 
+	# geom_point(size = 4, shape = 1, color = "black") +
+	# geom_point(size = 4, alpha = 0.2) +
+	xlab("Temperature (1/kT)") + ylab("Ln (carrying capacity (cells/mL))") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+	theme(text = element_text(size=14, family = "Arial")) +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) 
+
+?scale_x_continuous
+
+
+h <- function(x) exp(-0.0001*x)
+
+plot(5:25, h(5:25))
