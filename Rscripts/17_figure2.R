@@ -1,6 +1,7 @@
 ### new plots for revision
 library(ggthemes)
 library(broom)
+library(tidyverse)
 
 kdata <- read_csv("data-processed/K-params-masses.csv") %>% 
 	# separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
@@ -49,6 +50,7 @@ kdata_hot <- kdata %>%
 	filter(temperature == 32)
 
 	x <- seq(278.15, 278.15+20, by = 0.01)
+	
 	tsr_pred<- function(x) {
 		y <- (15.5*(81.87 + ((-1.92/100)*81.87)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x)) 
 	} 
