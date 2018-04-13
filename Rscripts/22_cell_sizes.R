@@ -37,11 +37,11 @@ library(viridis)
 all_sizes2 %>% 
 	mutate(date = ymd(date)) %>% 
 	filter(temperature < 32) %>% 
-	group_by(inverse_temp, rep, exp_day) %>% 
+	group_by(inverse_temp, rep, exp_day, temperature) %>% 
 	summarise(mean_size = mean(volume_abd)) %>% 
 	ungroup() %>% 
 	mutate(cell_biomass_M = 0.109 *(mean_size)^0.991) %>% 
-	ggplot(aes(x = inverse_temp, y = cell_biomass_M))  +
+	ggplot(aes(x = temperature, y = cell_biomass_M))  +
 	geom_smooth(method = "lm", color = "black") + theme_classic() + 
 	facet_wrap( ~ exp_day) + ylab("Cell biovolume (um3/cell)") + xlab("Temperature (°C)") +
 	geom_smooth(method = "lm", size =1, color = "black") +
@@ -51,19 +51,35 @@ all_sizes2 %>%
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 	theme(text = element_text(size=14, family = "Arial")) +
-	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
+	# scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
 	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
-	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
+	# scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) +
+	xlab("Temperature (°C)") +
 	ylab(bquote('Cell size (ug C '*~cell^-1*')')) +
 	theme_bw() +
-	ggtitle("Temperature (°C)") +
 	theme(text = element_text(size=12, family = "Arial"),
 				panel.grid.major = element_blank(), 
 				panel.grid.minor = element_blank(),
 				panel.background = element_rect(colour = "black", size=0.5),
-				plot.title = element_text(hjust = 0.5, size = 12))
+				plot.title = element_text(hjust = 0.5, size = 12)) +
+	theme(strip.background = element_rect(colour="white", fill="white")) 
 ggsave("figures/cell_size_time.pdf", width = 10, height = 6)
 	
+
+
+all3 <- all_sizes2 %>% 
+	mutate(date = ymd(date)) %>% 
+	filter(temperature < 32) %>% 
+	group_by(inverse_temp, temperature, rep, exp_day) %>% 
+	summarise(mean_size = mean(volume_abd)) %>% 
+	ungroup() %>% 
+	mutate(cell_biomass_M = 0.109 *(mean_size)^0.991) 
+	
+
+all3 %>% 
+	filter(exp_day == "Day 32") %>% 
+	lm(cell_biomass_M ~ temperature, data = .) %>% summary
+
 
 all_sizes %>% 
 	mutate(date = ymd(date)) %>% 

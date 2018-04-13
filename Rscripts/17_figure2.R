@@ -2,6 +2,9 @@
 library(ggthemes)
 library(broom)
 library(tidyverse)
+library(extrafont)
+loadfonts()
+library(cowplot)
 
 kdata <- read_csv("data-processed/K-params-masses.csv") %>% 
 	# separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
@@ -45,14 +48,14 @@ kdata_cool %>%
 
 kdata_cool %>% 
 	lm(log(estimate) ~ inverse_temp, data = .) %>% tidy(., conf.int = TRUE)
-
-kdata_hot <- kdata %>% 
-	filter(temperature == 32)
+# 
+# kdata_hot <- kdata %>% 
+# 	filter(temperature == 32)
 
 	x <- seq(278.15, 278.15+20, by = 0.01)
 	
 	tsr_pred<- function(x) {
-		y <- (15.5*(81.87 + ((-1.92/100)*81.87)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x)) 
+		y <- (15.65*(81.87 + ((-1.92/100)*81.87)*(x-278.15))^(-3/4))*exp(0.33/(8.62 * 10^(-5)*x)) 
 	} 
 	
 	savage_pred <- function(x) {
@@ -79,8 +82,8 @@ kdata_hot <- kdata %>%
 	plot2a <- ggplot(aes(x = inverse_temp, y = log(estimate*(68.51255^0.75))), data = kdata_cool) + 
 		geom_smooth(method = "lm", color = "black") +
 		geom_line(aes(x = inverse_temp, y = log(K_savage)), data = pred_df2, linetype = "dotted", size = 1) +
-		# geom_smooth(method = "lm", color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed") +
-		geom_line(color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed", size =1.5) +
+		geom_smooth(method = "lm", color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed") +
+		# geom_line(color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed", size =1.5) +
 		theme_bw() + geom_point(size = 4, shape = 1, color = "black") +
 		geom_point(size = 4, alpha = 0.2) +
 		geom_point(data = filter(kdata_hot, log(estimate) < 10), aes(x = inverse_temp, y = log(estimate*(68.51255^0.75))), size = 4, shape = 1) +
