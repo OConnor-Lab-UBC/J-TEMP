@@ -11,6 +11,7 @@ library(extrafont)
 loadfonts()
 sea1 <- read_csv("data-processed/sea_processed.csv")
 sea <- read_csv("data-processed/sea_processed2.csv")
+TT_fit <- read_csv("data-processed/TT_fit_edit.csv")
 
 TT_fit <- sea %>% 
 	filter(species == "TT") %>% 
@@ -202,7 +203,14 @@ boot_function <- function(x){
 results %>% 
 	map(boot_function)
 
-boot_many <- group_by(TT_fit, unique_id) %>% 
+TT_fit8 <- TT_fit %>% 
+	filter(temperature == 8)
+
+
+TT_fit32 <- TT_fit %>% 
+	filter(temperature == 32)
+
+boot_many8 <- group_by(TT_fit8, unique_id) %>% 
 	# create 200 bootstrap replicates per curve
 	do(., boot = modelr::bootstrap(., n = 1000, id = 'boot_num')) %>% 
 	# unnest to show bootstrap number, .id
@@ -210,7 +218,7 @@ boot_many <- group_by(TT_fit, unique_id) %>%
 	# regroup to include the boot_num
 	group_by(., unique_id, boot_num) %>% 
 	# run the model using map()
-	mutate(fit = map(strap, ~ nls_multstart(cell_density ~ K/(1 + (K/2200 - 1)*exp(-r*days)),
+	mutate(fit = map(strap, ~ nls_multstart(cell_density ~ K/(1 + (K/1200 - 1)*exp(-r*days)),
 																					data = data.frame(.),
 																					iter = 50,
 																					start_lower = c(K = 100, r = 0),
@@ -219,6 +227,25 @@ boot_many <- group_by(TT_fit, unique_id) %>%
 																					na.action = na.omit,
 																					lower = c(K = 100, r = 0),
 																					upper = c(K = 50000, r = 2),
+																					control = nls.control(maxiter=1000, minFactor=1/204800000))))
+
+boot_many32 <- group_by(TT_fit32, unique_id) %>% 
+	# create 200 bootstrap replicates per curve
+	do(., boot = modelr::bootstrap(., n = 1000, id = 'boot_num')) %>% 
+	# unnest to show bootstrap number, .id
+	unnest() %>% 
+	# regroup to include the boot_num
+	group_by(., unique_id, boot_num) %>% 
+	# run the model using map()
+	mutate(fit = map(strap, ~ nls_multstart(cell_density ~ K/(1 + (K/1200 - 1)*exp(-r*days)),
+																					data = data.frame(.),
+																					iter = 50,
+																					start_lower = c(K = 100, r = 0),
+																					start_upper = c(K = 10000, r = 1),
+																					supp_errors = 'Y',
+																					na.action = na.omit,
+																					lower = c(K = 100, r = 0),
+																					upper = c(K = 10000, r = 2),
 																					control = nls.control(maxiter=1000, minFactor=1/204800000))))
 
 save(boot_many, file =  "boot_many.rdata")
@@ -242,16 +269,81 @@ preds_many <- fits_many %>%
 	unnest(fit %>% map(augment, newdata = new_preds))
 
 ### do this to take out only the successful fits
-preds_id <- boot_many %>%
+info_boot <- boot_many8 %>%
+	unnest(fit %>% map(glance))
+
+boot_many3 <- boot_many2 %>% 
+	filter(!grepl("32", unique_id))
+
+	
+	boot_many9 <- bind_rows(boot_many3, boot_many8, boot_many32)
+	
+boot10 <- 	boot_many9 %>% 
+		filter(!grepl("38", unique_id)) 
+
+preds_id <- boot10 %>%
+	filter(!grepl("8", unique_id)) %>% 
 	unnest(fit %>% map(tidy)) %>% 
 	unite(uid, unique_id, boot_num, remove = FALSE) %>% 
 	distinct(uid)
 
-boots_id <- boot_many %>% 
+k_many2 <- boot10 %>%
+	unite(uid, unique_id, boot_num, remove = FALSE) %>% 
+	# filter(uid %in% preds_id$uid) %>% 
+	unnest(fit %>% map(tidy))
+
+boot10 %>% 
+	filter(unique_id == "8_1") %>% View
+
+
+write_csv(k_many, "data-processed/params_boot_many.csv")
+write_csv(k_many2, "data-processed/params_boot_many2.csv")
+
+k_many %>% 
+	filter(term == "K") %>% 
+	group_by(unique_id) %>% 
+	summarise(lower = quantile(estimate, 0.025),
+						upper = quantile(estimate, 0.975),
+						mean= mean(estimate)) %>%
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(upper < 40000) %>% 
+	ggplot(aes(x = rep, y = mean)) + geom_point() +
+	geom_errorbar(aes(ymin = lower, ymax = upper)) +
+	facet_wrap( ~ temperature)
+
+k_many$version <- "1"
+k_many2$version <- "2"
+
+k_boot_all <- bind_rows(k_many, k_many2)
+
+kb <- k_boot_all %>% 
+	filter(term == "K") %>% 
+	group_by(unique_id, version) %>% 
+	summarise(lower = quantile(estimate, 0.025),
+						upper = quantile(estimate, 0.975),
+						mean= mean(estimate)) %>%
+	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(upper < 40000) %>% 
+	mutate(version = ifelse(temperature == 32 & version == "2", "1", version)) %>% 
+	mutate(version = ifelse(temperature == 32 & version == "1", "2", version))
+
+write_csv(kb, "data-processed/K-estimates-boot.csv")
+	
+
+ggplot()+
+	geom_point(aes(x = rep, y = mean, color = version), data = kb) +
+	geom_errorbar(aes(ymin = lower, ymax = upper, x = rep, color = version), data = kb) +
+	geom_point(aes(x = rep, y = estimate), data = filter(kdata_all, temperature < 33), color = "black") +
+	geom_errorbar(aes(ymin = conf.low, ymax = conf.high, x = rep), data = filter(kdata_all, temperature < 33)) +
+	facet_wrap( ~ temperature)
+
+boots_id2 <- boot_many2 %>% 
 	unite(uid, unique_id, boot_num, remove = FALSE) %>% 
 	distinct(uid)
 
-preds_many_boot <- boot_many %>%
+preds_many_boot2 <- boot_many2 %>%
 	unite(uid, unique_id, boot_num, remove = FALSE) %>% 
 	filter(uid %in% preds_id$uid) %>% 
 	unnest(fit %>% map(augment, newdata = new_preds)) %>%
@@ -275,7 +367,7 @@ write_csv(boots_all, "data-processed/boots_all.csv")
 length(unique(preds_many_boot$unique_id))
 
 preds_many_boot <- read_csv("data-processed/preds_many_boot.csv")
-preds_boot <- preds_many_boot %>% 
+preds_boot <- preds_many_boot2 %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature))
 
@@ -399,7 +491,7 @@ preds1b <- preds1 %>%
 
 
 	ggplot() +
-		# geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
+		geom_ribbon(aes(ymin = lwr_CI, ymax = upr_CI, x = days), data = filter(preds_boot, temperature < 33), alpha = .3, fill = "grey") + 
 		geom_line(aes(x = days, y = .fitted), data = filter(preds3, temperature < 33)) +
 		# geom_line(aes(x = days, y = .fitted), data = filter(preds1b, temperature < 33), color = "red") +
 		facet_grid(temperature ~ rep, labeller = labeller(.multi_line = FALSE)) +

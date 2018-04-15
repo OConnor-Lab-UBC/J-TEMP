@@ -1,4 +1,7 @@
-
+library(tidyverse)
+library(broom)
+library(modelr)
+library(nls.multstart)
 
 sea <- read_csv("data-processed/sea_processed2.csv")
 
@@ -64,11 +67,13 @@ CI <- fits_many %>%
 params <- merge(params, CI, by = intersect(names(params), names(CI)))
 write_csv(params, "data-processed/params-edit.csv")
 
+
+params <- read_csv("data-processed/params-edit.csv")
 params %>% 
 	separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
 	# filter(estimate < 50000) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
-	filter(temperature < 33) %>% 
+	filter(temperature < 32) %>% 
 	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
 	geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
 	facet_wrap( ~ term, scales = "free") 

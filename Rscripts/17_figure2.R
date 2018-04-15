@@ -20,6 +20,8 @@ kdata <- read_csv("data-processed/params-edit.csv") %>%
 	filter(term == "K") %>% 
 	mutate(set = "new")
 
+kdata_cool <- kdata %>% 
+	filter(temperature < 32)
 
 kdata %>% 
 	filter(temperature == "5") %>% 
@@ -31,12 +33,40 @@ kdata_hot <- read_csv("data-processed/params32.csv") %>%
 	mutate(temperature = as.numeric(temperature)) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	filter(term == "K") %>% 
-	mutate(set = "new")
+	mutate(set = "new") %>% 
+	mutate(rep = as.integer(rep))
 
 
-kdata_cool <- kdata %>% 
+str(kdata_hot)
+str(kdata_cool)
+
+kdata_all <- bind_rows(kdata_cool, kdata_hot)
+
+kdata_all %>% 
+	# mutate(temperature = case_when(temperature == 5 ~ "5°C",
+	# 															 temperature == 8 ~ "8°C",
+	# 															 temperature == 16 ~ "16°C",
+	# 															 temperature == 25 ~ "25°C",
+	# 															 temperature == 32 ~ "32°C")) %>% 
+	ggplot(aes(x = rep, y = estimate)) + geom_point(size = 2) +
+	geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) + 
+	facet_wrap( ~ temperature, ncol = 1, nrow = 5) +
+	theme(strip.background = element_rect(colour="white", fill="white")) +
+	ylab("K (cells/mL)") + xlab("Replicate population")
+ggsave("figures/k_estimates.pdf", width = 4, height = 8)
+
+
+kdata_r <- read_csv("data-processed/K-params-masses.csv") %>% 
+	# separate(unique_id, into = c("temperature", "rep"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+	filter(term == "r") %>% 
+	mutate(set = "new") %>% 
 	filter(temperature < 32)
 
+kdata_r %>% 
+	ggplot(aes(x = temperature, y = estimate, color = factor(rep))) + geom_point() +
+	geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.5)
 
 
 (-15.964/1173)*100
