@@ -331,13 +331,23 @@ kb <- k_boot_all %>%
 
 write_csv(kb, "data-processed/K-estimates-boot.csv")
 	
+kb2 <- kb %>% 
+	filter(version == 2) %>% 
+	group_by(rep, temperature) %>% 
+	summarise_each(funs(mean), upper, lower, mean) %>% 
+	ungroup()
 
+### plot of K estimates
 ggplot()+
-	geom_point(aes(x = rep, y = mean, color = version), data = kb) +
-	geom_errorbar(aes(ymin = lower, ymax = upper, x = rep, color = version), data = kb) +
-	geom_point(aes(x = rep, y = estimate), data = filter(kdata_all, temperature < 33), color = "black") +
-	geom_errorbar(aes(ymin = conf.low, ymax = conf.high, x = rep), data = filter(kdata_all, temperature < 33)) +
-	facet_wrap( ~ temperature)
+	geom_point(aes(x = rep, y = mean), data = kb2) +
+	geom_errorbar(aes(ymin = lower, ymax = upper, x = rep), data = kb2, width = 0.2) +
+facet_wrap( ~ temperature, ncol = 1, nrow = 5) +
+	theme(strip.background = element_rect(colour="white", fill="white")) +
+	ylab("K (cells/mL)") + xlab("Replicate population")
+ggsave("figures/k_estimates_boot.pdf", width = 4, height = 8)
+
+
+
 
 boots_id2 <- boot_many2 %>% 
 	unite(uid, unique_id, boot_num, remove = FALSE) %>% 
