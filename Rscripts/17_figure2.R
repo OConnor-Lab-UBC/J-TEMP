@@ -109,22 +109,25 @@ kdata_cool %>%
 		lm(log(K_savage) ~ inverse_temp, data = .) %>% 
 		tidy(., conf.int = TRUE)
 	
+	library(cowplot)
 	plot2a <- ggplot(aes(x = inverse_temp, y = log(estimate*(68.51255^0.75))), data = kdata_cool) + 
 		geom_smooth(method = "lm", color = "black") +
 		geom_line(aes(x = inverse_temp, y = log(K_savage)), data = pred_df2, linetype = "dotted", size = 1) +
 		geom_smooth(method = "lm", color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed") +
 		# geom_line(color = "black", data = pred_df2, aes(x = inverse_temp, y = log(K_tsr)), linetype = "dashed", size =1.5) +
-		theme_bw() + geom_point(size = 4, shape = 1, color = "black") +
+		geom_point(size = 4, shape = 1, color = "black") +
 		geom_point(size = 4, alpha = 0.2) +
-		geom_point(data = filter(kdata_hot, log(estimate) < 10), aes(x = inverse_temp, y = log(estimate*(68.51255^0.75))), size = 4, shape = 1) +
+		# geom_point(data = filter(kdata_hot, log(estimate) < 10), aes(x = inverse_temp, y = log(estimate*(68.51255^0.75))), size = 4, shape = 1) +
 		xlab("Temperature (1/kT)") + ylab("Ln (carrying capacity (cells/mL))") +
-		theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-					panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+		# theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+					# panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 		theme(text = element_text(size=14, family = "Arial")) +
-		scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
+		scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) +
+		xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
 		theme(plot.title = element_text(hjust = 0.5, size = 14)) + ylim(12.25, 13.50)
 	ggsave("figures/k-temp-figure2_no_32_edit.pdf", width = 5, height = 4)	
-	ggsave("figures/k-temp-figure2_with_32_edit.pdf", width = 5, height = 4)	
+	ggsave("figures/k-temp-figure2_with_32_edit.pdf", width = 5, height = 4)
+	ggsave("figures/k-temp-figure2_no_32_edit_poster.pdf", width = 5, height = 4)	
 	
 	
 	
