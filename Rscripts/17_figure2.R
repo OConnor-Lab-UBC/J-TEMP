@@ -42,6 +42,8 @@ str(kdata_cool)
 
 kdata_all <- bind_rows(kdata_cool, kdata_hot)
 
+write_csv(kdata_all, "data-processed/k-data-all.csv")
+
 kdata_all %>% 
 	# mutate(temperature = case_when(temperature == 5 ~ "5°C",
 	# 															 temperature == 8 ~ "8°C",
@@ -75,9 +77,15 @@ kdata_cool %>%
 kdata_cool %>% 
 	lm(log(estimate*(68.51255^0.75)) ~ inverse_temp, data = .) %>% tidy(., conf.int = TRUE)
 
+kdata_cool %>% 
+	lm(log(estimate*(68.51255^0.75)) ~ inverse_temp, data = .) %>% summary()
+
 
 kdata_cool %>% 
 	lm(log(estimate) ~ inverse_temp, data = .) %>% tidy(., conf.int = TRUE)
+
+kdata_cool %>% 
+	lm(log(estimate) ~ inverse_temp, data = .) %>% summary()
 # 
 # kdata_hot <- kdata %>% 
 # 	filter(temperature == 32)
@@ -124,10 +132,15 @@ kdata_cool %>%
 		theme(text = element_text(size=14, family = "Arial")) +
 		scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) +
 		xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
-		theme(plot.title = element_text(hjust = 0.5, size = 14)) + ylim(12.25, 13.50)
+		theme(text = element_text(size=18, family = "Arial"),
+				 panel.grid.major = element_blank(), 
+				 panel.grid.minor = element_blank(),
+				 panel.background = element_rect(colour = "black", size=0.5),
+				 plot.title = element_text(hjust = 0.5, size = 14))+
+		ylim(12.25, 13.50)
 	ggsave("figures/k-temp-figure2_no_32_edit.pdf", width = 5, height = 4)	
 	ggsave("figures/k-temp-figure2_with_32_edit.pdf", width = 5, height = 4)
-	ggsave("figures/k-temp-figure2_no_32_edit_poster.pdf", width = 5, height = 4)	
+	ggsave("figures/k-temp-figure2_no_32_edit_poster.pdf", width = 4.5, height = 4)	
 	
 	
 	

@@ -2,6 +2,7 @@
 
 library(tidyverse)
 library(lubridate)
+library(cowplot)
 
 
 k_biomass <- read_csv("data-processed/K-estimates-biomass-edit.csv")
@@ -73,23 +74,24 @@ cell_size_plot <- masses %>%
 	ggplot(aes(x = inverse_temp, y = mean_size)) +
 	geom_jitter(aes(x = inverse_temp, y = cell_biomass_M, group = inverse_temp), data = cell_sizes2, color = "darkgrey", fill = "grey", size = 1.5, width = 0.1, alpha = 0.7) +
 	geom_smooth(method = "lm", size =1, color = "black") +
-	theme_bw() + geom_point(size = 4, color = "black", alpha = 0.2) +
+	geom_point(size = 4, color = "black", alpha = 0.2) +
 	geom_point(size = 4, shape = 1) +
 	xlab("Temperature (1/kT)") +
-	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+	# theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+	# 			panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 	theme(text = element_text(size=14, family = "Arial")) +
 	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
 	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
 	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
 	ylab(bquote('Cell size (ug C '*~cell^-1*')')) +
-	theme_bw() +
 	ggtitle("Temperature (°C)") +
-	theme(text = element_text(size=12, family = "Arial"),
+	theme(text = element_text(size=18, family = "Arial"),
 				panel.grid.major = element_blank(), 
 				panel.grid.minor = element_blank(),
 				panel.background = element_rect(colour = "black", size=0.5),
 				plot.title = element_text(hjust = 0.5, size = 12)) +ylim(0, 175)
+ggsave("figures/k-temp-cell-size-poster.pdf", width = 4.5, height = 4)	
+
 	
 nitrate_plot <- nitrate2 %>% 
 	ggplot(aes(x = inverse_temp, y = nitrate)) +
