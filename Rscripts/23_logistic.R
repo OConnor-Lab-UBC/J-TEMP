@@ -7,7 +7,7 @@ sea <- read_csv("data-processed/sea_processed2.csv")
 
 TT_fit <- sea %>% 
 	filter(species == "TT") %>% 
-	# filter(temperature < 32) %>% 
+	filter(temperature < 34) %>% 
 	# filter(cell_density > 1000) %>% 
 	# mutate(cell_density = ifelse(cell_density < 2000, 1000, cell_density)) %>% 
 	mutate(cell_density = ifelse(cell_density == 2200, 1200, cell_density)) %>% 
@@ -20,7 +20,10 @@ TT_fit <- sea %>%
 	mutate(days = time_since_innoc_hours/24) %>% 
 	unite(unique_id, temperature, rep, remove = FALSE, sep = "_")
 
+
+
 write_csv(TT_fit, "data-processed/TT_fit_edit.csv")
+write_csv(TT_fit, "data-processed/TT_fit_edit-final.csv") ## without 38C
 
 TT_25 <- TT_fit %>% 
 	filter(temperature == 25, days < 17)

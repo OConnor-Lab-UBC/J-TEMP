@@ -15,9 +15,21 @@ nitrate2 <- nitrate %>%
 	mutate(inverse_temp = 1/(8.62 * 10^(-5)*(temp + 273.15))) %>% 
 	filter(species == "TT") %>% 
 	filter(temp < 32) %>% 
-	unite(col = "unique_id", temp, rep, sep = "_", remove =  FALSE)
+	unite(col = "unique_id", temp, rep, sep = "_", remove =  FALSE) %>% 
+	select(temp, rep, date_N_assay, abs, nitrate) %>% 
+	rename(temperature = temp, 
+				 replicate = rep, 
+				 assay_date = date_N_assay,
+				 absorbance = abs,
+				 nitrate_uM = nitrate)
 
+write_csv(nitrate2, "data-processed/nitrate-final.csv")
 
+nitrate2 %>% 
+	ggplot(aes(x = inverse_temp, y = nitrate)) +
+	geom_smooth(method = "lm", size =1, color = "black") +
+	geom_point(size = 4, alpha = 0.2) + 
+	geom_point(size = 4, shape = 1)
 
 cell_sizes2 <- cell_sizes %>% 
 	mutate(date = ymd(date)) %>% 
@@ -27,6 +39,10 @@ cell_sizes2 <- cell_sizes %>%
 	filter(volume_abd < 2500) %>% 
 	group_by(temperature) %>% 
 	sample_n(size = 150, replace = FALSE)
+
+cell_sizes3 <- cell_sizes2 %>% 
+	select(temperature, rep, date, volume_abd, cell_biomass_M)
+write_csv(cell_sizes3, "data-processed/cell-sizes-time-series.csv")
 
 
 cell_sizes2 %>% 
